@@ -3,6 +3,16 @@ import 'package:flutter/material.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  // ── Tampilkan popup "Login Diperlukan" ──────────────────────────────────
+  void _showLoginRequired(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => const _LoginRequiredSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +38,6 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // App Bar Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -56,9 +65,7 @@ class HomePage extends StatelessWidget {
                             ],
                           ),
                           GestureDetector(
-                            onTap: () {
-                              // TODO: Navigate to login
-                            },
+                            onTap: () {},
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
@@ -68,24 +75,19 @@ class HomePage extends StatelessWidget {
                                 border: Border.all(
                                     color: Colors.white.withOpacity(0.4)),
                               ),
-                              child: const Text(
-                                'Masuk',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600),
-                              ),
+                              child: const Text('Masuk',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 32),
-
-                      const Text(
-                        'Selamat Datang! 👋',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
+                      const Text('Selamat Datang! 👋',
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 14)),
                       const SizedBox(height: 4),
                       const Text(
                         'Jelajahi\nTanjung Pinang',
@@ -97,8 +99,6 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Search Bar
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -160,14 +160,11 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Kategori Wisata',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A2A3A),
-                        ),
-                      ),
+                      const Text('Kategori Wisata',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A2A3A))),
                       const SizedBox(height: 12),
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -220,32 +217,24 @@ class HomePage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Mulai Perjalananmu!',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          const Text('Mulai Perjalananmu!',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
-                          Text(
-                            'Daftar gratis & nikmati semua fitur eksklusif',
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 12),
-                          ),
+                          Text('Daftar gratis & nikmati semua fitur eksklusif',
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.85),
+                                  fontSize: 12)),
                           const SizedBox(height: 14),
                           Row(
                             children: [
-                              // Masuk
                               Expanded(
                                 child: SizedBox(
                                   height: 38,
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      // TODO: Navigate to login
-                                    },
+                                    onPressed: () {},
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.white,
                                       foregroundColor: const Color(0xFF1A9BD7),
@@ -263,14 +252,11 @@ class HomePage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // Daftar Gratis
                               Expanded(
                                 child: SizedBox(
                                   height: 38,
                                   child: OutlinedButton(
-                                    onPressed: () {
-                                      // TODO: Navigate to register
-                                    },
+                                    onPressed: () {},
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: Colors.white,
                                       side: const BorderSide(
@@ -299,7 +285,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            // ── AI Guide Chat ────────────────────────────────────────────
+            // ── AI Guide Chat — tap apapun di sini → popup login ─────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Container(
@@ -319,7 +305,7 @@ class HomePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
+                    // Header AI Guide
                     Row(
                       children: [
                         Container(
@@ -336,19 +322,14 @@ class HomePage extends StatelessWidget {
                         const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'AI Guide',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A2A3A),
-                              ),
-                            ),
-                            Text(
-                              'Tanya apa saja tentang Tanjung Pinang',
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey),
-                            ),
+                            Text('AI Guide',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1A2A3A))),
+                            Text('Tanya apa saja tentang Tanjung Pinang',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey)),
                           ],
                         ),
                         const Spacer(),
@@ -359,20 +340,18 @@ class HomePage extends StatelessWidget {
                             color: const Color(0xFF66BB6A).withOpacity(0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            '● Online',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF66BB6A),
-                                fontWeight: FontWeight.w600),
-                          ),
+                          child: const Text('● Online',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF66BB6A),
+                                  fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
 
                     const SizedBox(height: 14),
 
-                    // Chat bubble dari AI
+                    // Chat bubble
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -382,62 +361,82 @@ class HomePage extends StatelessWidget {
                       child: const Text(
                         '👋 Halo! Saya AI Guide kamu. Mau tanya soal destinasi wisata, kuliner, atau transportasi di Tanjung Pinang?',
                         style: TextStyle(
-                            fontSize: 13, color: Color(0xFF1A2A3A), height: 1.4),
+                            fontSize: 13,
+                            color: Color(0xFF1A2A3A),
+                            height: 1.4),
                       ),
                     ),
 
                     const SizedBox(height: 12),
 
-                    // Suggested questions
+                    // Suggested questions — masing-masing tap → popup
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _SuggestChip(label: '🏖️ Pantai terbaik?'),
-                        _SuggestChip(label: '🍜 Kuliner wajib coba?'),
-                        _SuggestChip(label: '🚢 Cara ke Penyengat?'),
+                        _SuggestChip(
+                          label: '🏖️ Pantai terbaik?',
+                          onTap: () => _showLoginRequired(context),
+                        ),
+                        _SuggestChip(
+                          label: '🍜 Kuliner wajib coba?',
+                          onTap: () => _showLoginRequired(context),
+                        ),
+                        _SuggestChip(
+                          label: '🚢 Cara ke Penyengat?',
+                          onTap: () => _showLoginRequired(context),
+                        ),
                       ],
                     ),
 
                     const SizedBox(height: 12),
 
-                    // Input bar
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 44,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE8F4FD),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Ketik pertanyaanmu...',
-                                hintStyle: TextStyle(
-                                    fontSize: 13, color: Colors.grey),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding:
-                                    EdgeInsets.symmetric(vertical: 12),
+                    // Input bar — tap → popup
+                    GestureDetector(
+                      onTap: () => _showLoginRequired(context),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 44,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F4FD),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const AbsorbPointer(
+                                // AbsorbPointer agar TextField tidak fokus, tap tetap ke GestureDetector
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Ketik pertanyaanmu...',
+                                    hintStyle: TextStyle(
+                                        fontSize: 13, color: Colors.grey),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        vertical: 12),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A9BD7),
-                            borderRadius: BorderRadius.circular(12),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => _showLoginRequired(context),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A9BD7),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.send_rounded,
+                                  color: Colors.white, size: 18),
+                            ),
                           ),
-                          child: const Icon(Icons.send_rounded,
-                              color: Colors.white, size: 18),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -523,7 +522,126 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ─── Private Widgets ─────────────────────────────────────────────────────────
+// ── Modal Bottom Sheet "Login Diperlukan" ─────────────────────────────────────
+class _LoginRequiredSheet extends StatelessWidget {
+  const _LoginRequiredSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icon
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1A9BD7), Color(0xFF0D7AB5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(Icons.lock_outline_rounded,
+                color: Colors.white, size: 30),
+          ),
+          const SizedBox(height: 20),
+
+          // Title
+          const Text(
+            'Login Diperlukan',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A2A3A),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Desc
+          Text(
+            'Anda perlu login atau mendaftar terlebih dahulu\nuntuk mengakses menu destinasi dan fitur lainnya.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Daftar Sekarang
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // TODO: Navigate to register
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A9BD7),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text('Daftar Sekarang',
+                  style:
+                      TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Masuk
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // TODO: Navigate to login
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1A9BD7),
+                side: const BorderSide(color: Color(0xFF1A9BD7), width: 1.5),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text('Masuk',
+                  style:
+                      TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Nanti Saja
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Text(
+              'Nanti Saja',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[500],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Private Widgets ──────────────────────────────────────────────────────────
 
 class _CategoryItem extends StatelessWidget {
   final IconData icon;
@@ -560,12 +678,14 @@ class _CategoryItem extends StatelessWidget {
 
 class _SuggestChip extends StatelessWidget {
   final String label;
-  const _SuggestChip({required this.label});
+  final VoidCallback onTap;
+
+  const _SuggestChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
