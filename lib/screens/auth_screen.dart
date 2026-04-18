@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../widgets/custom_text_field.dart';
+import '../shell/main_shell.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,7 +12,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen>
     with SingleTickerProviderStateMixin {
-  bool _isLogin = true; // true = Masuk, false = Daftar
+  bool _isLogin = true;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -32,10 +33,14 @@ class _AuthScreenState extends State<AuthScreen>
     super.dispose();
   }
 
-  void _switchTab(bool isLogin) {
-    setState(() {
-      _isLogin = isLogin;
-    });
+  void _switchTab(bool isLogin) => setState(() => _isLogin = isLogin);
+
+  /// Navigate ke MainShell (homepage) setelah login/daftar/tamu
+  void _goToMain() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MainShell()),
+      (route) => false, // hapus semua route sebelumnya
+    );
   }
 
   @override
@@ -45,21 +50,13 @@ class _AuthScreenState extends State<AuthScreen>
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header with gradient
             _buildHeader(),
-
-            // Tab toggle
             _buildTabToggle(),
-
-            // Form content
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: _isLogin
-                  ? _buildLoginForm()
-                  : _buildRegisterForm(),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: _isLogin ? _buildLoginForm() : _buildRegisterForm(),
             ),
           ],
         ),
@@ -76,71 +73,48 @@ class _AuthScreenState extends State<AuthScreen>
       ),
       decoration: const BoxDecoration(
         gradient: AppColors.headerGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(0),
-          bottomRight: Radius.circular(0),
-        ),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
           // Decorative circles
           Positioned(
-            top: -30,
-            left: -30,
+            top: -30, left: -30,
             child: Container(
-              width: 120,
-              height: 120,
+              width: 120, height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.white.withValues(alpha: 0.08),
+                color: AppColors.white.withOpacity(0.08),
               ),
             ),
           ),
           Positioned(
-            top: -10,
-            right: -20,
+            top: -10, right: -20,
             child: Container(
-              width: 80,
-              height: 80,
+              width: 80, height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.white.withValues(alpha: 0.05),
+                color: AppColors.white.withOpacity(0.05),
               ),
             ),
           ),
-          Positioned(
-            bottom: 20,
-            right: 40,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.white.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          // Content
           SizedBox(
             width: double.infinity,
             child: Column(
               children: [
-                // Logo
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 80, height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.white.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
+                      color: AppColors.white.withOpacity(0.3), width: 2),
                   ),
                   child: ClipOval(
                     child: Image.asset(
                       'assets/images/logo_white.png',
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                          Icons.explore_rounded, color: Colors.white, size: 40),
                     ),
                   ),
                 ),
@@ -174,7 +148,7 @@ class _AuthScreenState extends State<AuthScreen>
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: Colors.black.withOpacity(0.08),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -182,7 +156,6 @@ class _AuthScreenState extends State<AuthScreen>
         ),
         child: Row(
           children: [
-            // Masuk tab
             Expanded(
               child: GestureDetector(
                 onTap: () => _switchTab(true),
@@ -194,19 +167,15 @@ class _AuthScreenState extends State<AuthScreen>
                     borderRadius: BorderRadius.circular(26),
                   ),
                   child: Center(
-                    child: Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: _isLogin ? AppColors.white : AppColors.textGrey,
-                      ),
-                    ),
+                    child: Text('Masuk',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: _isLogin ? AppColors.white : AppColors.textGrey)),
                   ),
                 ),
               ),
             ),
-            // Daftar tab
             Expanded(
               child: GestureDetector(
                 onTap: () => _switchTab(false),
@@ -218,14 +187,11 @@ class _AuthScreenState extends State<AuthScreen>
                     borderRadius: BorderRadius.circular(26),
                   ),
                   child: Center(
-                    child: Text(
-                      'Daftar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: !_isLogin ? AppColors.white : AppColors.textGrey,
-                      ),
-                    ),
+                    child: Text('Daftar',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: !_isLogin ? AppColors.white : AppColors.textGrey)),
                   ),
                 ),
               ),
@@ -243,59 +209,32 @@ class _AuthScreenState extends State<AuthScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Email
-          CustomTextField(
-            label: 'Email',
-            hintText: 'Masukkan email',
-            prefixIcon: Icons.email_outlined,
-          ),
+          CustomTextField(label: 'Email', hintText: 'Masukkan email', prefixIcon: Icons.email_outlined),
           const SizedBox(height: 16),
-
-          // Password
           CustomTextField(
             label: 'Password',
             hintText: 'Masukkan password',
             prefixIcon: Icons.lock_outline,
             isPassword: true,
             obscureText: _obscurePassword,
-            onTogglePassword: () {
-              setState(() {
-                _obscurePassword = !_obscurePassword;
-              });
-            },
+            onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
           const SizedBox(height: 8),
-
-          // Lupa Password
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {},
-              child: const Text(
-                'Lupa Password?',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.primaryBlue,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              child: const Text('Lupa Password?',
+                  style: TextStyle(fontSize: 14, color: AppColors.primaryBlue, fontWeight: FontWeight.w500)),
             ),
           ),
           const SizedBox(height: 16),
-
-          // Masuk button
           _buildPrimaryButton('Masuk'),
           const SizedBox(height: 24),
-
-          // Divider
           _buildDivider(),
           const SizedBox(height: 20),
-
-          // Google button
           _buildGoogleButton(),
           const SizedBox(height: 12),
-
-          // Guest button
           _buildGuestButton(),
           const SizedBox(height: 40),
         ],
@@ -310,65 +249,34 @@ class _AuthScreenState extends State<AuthScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Nama Lengkap
-          CustomTextField(
-            label: 'Nama Lengkap',
-            hintText: 'Masukkan nama lengkap',
-            prefixIcon: Icons.person_outline,
-          ),
+          CustomTextField(label: 'Nama Lengkap', hintText: 'Masukkan nama lengkap', prefixIcon: Icons.person_outline),
           const SizedBox(height: 16),
-
-          // Email
-          CustomTextField(
-            label: 'Email',
-            hintText: 'Masukkan email',
-            prefixIcon: Icons.email_outlined,
-          ),
+          CustomTextField(label: 'Email', hintText: 'Masukkan email', prefixIcon: Icons.email_outlined),
           const SizedBox(height: 16),
-
-          // Password
           CustomTextField(
             label: 'Password',
             hintText: 'Masukkan password',
             prefixIcon: Icons.lock_outline,
             isPassword: true,
             obscureText: _obscurePassword,
-            onTogglePassword: () {
-              setState(() {
-                _obscurePassword = !_obscurePassword;
-              });
-            },
+            onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
           const SizedBox(height: 16),
-
-          // Konfirmasi Password
           CustomTextField(
             label: 'Konfirmasi Password',
             hintText: 'Ulangi password',
             prefixIcon: Icons.lock_outline,
             isPassword: true,
             obscureText: _obscureConfirmPassword,
-            onTogglePassword: () {
-              setState(() {
-                _obscureConfirmPassword = !_obscureConfirmPassword;
-              });
-            },
+            onTogglePassword: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
           ),
           const SizedBox(height: 24),
-
-          // Daftar Sekarang button
           _buildPrimaryButton('Daftar Sekarang'),
           const SizedBox(height: 24),
-
-          // Divider
           _buildDivider(),
           const SizedBox(height: 20),
-
-          // Google button
           _buildGoogleButton(),
           const SizedBox(height: 12),
-
-          // Guest button
           _buildGuestButton(),
           const SizedBox(height: 40),
         ],
@@ -385,29 +293,21 @@ class _AuthScreenState extends State<AuthScreen>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBlue.withValues(alpha: 0.3),
+            color: AppColors.primaryBlue.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: _goToMain, // ← navigate ke MainShell
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.white,
-          ),
-        ),
+        child: Text(text,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.white)),
       ),
     );
   }
@@ -418,13 +318,7 @@ class _AuthScreenState extends State<AuthScreen>
         Expanded(child: Divider(color: AppColors.greyBorder, thickness: 1)),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'atau',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textGrey,
-            ),
-          ),
+          child: Text('atau', style: TextStyle(fontSize: 14, color: AppColors.textGrey)),
         ),
         Expanded(child: Divider(color: AppColors.greyBorder, thickness: 1)),
       ],
@@ -441,37 +335,25 @@ class _AuthScreenState extends State<AuthScreen>
         border: Border.all(color: AppColors.greyBorder, width: 1),
       ),
       child: TextButton(
-        onPressed: () {},
+        onPressed: _goToMain, // ← navigate ke MainShell
         style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Google icon (G logo using text)
             Container(
-              width: 24,
-              height: 24,
+              width: 24, height: 24,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(
-                    'https://www.google.com/favicon.ico',
-                  ),
+                  image: NetworkImage('https://www.google.com/favicon.ico'),
                   fit: BoxFit.contain,
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Lanjutkan dengan Google',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textDark,
-              ),
-            ),
+            const Text('Lanjutkan dengan Google',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textDark)),
           ],
         ),
       ),
@@ -488,29 +370,17 @@ class _AuthScreenState extends State<AuthScreen>
         border: Border.all(color: AppColors.greyBorder, width: 1),
       ),
       child: TextButton(
-        onPressed: () {},
+        onPressed: _goToMain, // ← tamu juga masuk ke MainShell
         style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.person_outline,
-              color: AppColors.primaryBlue,
-              size: 22,
-            ),
+            const Icon(Icons.person_outline, color: AppColors.primaryBlue, size: 22),
             const SizedBox(width: 12),
-            const Text(
-              'Lanjutkan sebagai Tamu',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textDark,
-              ),
-            ),
+            const Text('Lanjutkan sebagai Tamu',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textDark)),
           ],
         ),
       ),

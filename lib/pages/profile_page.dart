@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import '../screens/auth_screen.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
+
+  void _goToAuth(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -9,7 +17,6 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: const Color(0xFFE8F4FD),
       body: CustomScrollView(
         slivers: [
-          // ── Header dengan SliverToBoxAdapter agar tidak terpotong ──────
           SliverToBoxAdapter(
             child: Container(
               width: double.infinity,
@@ -17,7 +24,7 @@ class ProfilePage extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF1A9BD7), Color(0xFF0D7AB5)],
+                  colors: [Color(0xFF00AEEF), Color(0xFF0077C2)],
                 ),
               ),
               child: SafeArea(
@@ -65,15 +72,12 @@ class ProfilePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 28),
 
-                      // ── Tombol Masuk & Daftar langsung di dalam header ──
-                      // Ini mencegah terpotong karena ada di dalam container yang sama
+                      // ── Masuk ke Akun → AuthScreen ──────────────────────
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Navigate to login
-                          },
+                          onPressed: () => _goToAuth(context),
                           icon: const Icon(Icons.login_rounded, size: 20),
                           label: const Text(
                             'Masuk ke Akun',
@@ -82,7 +86,7 @@ class ProfilePage extends StatelessWidget {
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF1A9BD7),
+                            foregroundColor: const Color(0xFF00AEEF),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14)),
@@ -90,13 +94,13 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
+
+                      // ── Daftar Akun Baru → AuthScreen ───────────────────
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            // TODO: Navigate to register
-                          },
+                          onPressed: () => _goToAuth(context),
                           icon: const Icon(Icons.person_add_rounded, size: 20),
                           label: const Text(
                             'Daftar Akun Baru',
@@ -119,7 +123,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
-          // ── Keuntungan Bergabung ─────────────────────────────────────
+          // ── Keuntungan Bergabung ─────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -161,7 +165,7 @@ class ProfilePage extends StatelessWidget {
                     SizedBox(height: 12),
                     _BenefitItem(
                       icon: Icons.emoji_events_rounded,
-                      color: Color(0xFF1A9BD7),
+                      color: Color(0xFF00AEEF),
                       text: 'Kumpulkan poin & raih level',
                     ),
                     SizedBox(height: 12),
@@ -176,7 +180,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
-          // ── Informasi Umum ───────────────────────────────────────────
+          // ── Informasi Umum ───────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -239,8 +243,6 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-// ─── Private Widgets ─────────────────────────────────────────────────────────
-
 class _BenefitItem extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -295,7 +297,8 @@ class _InfoMenuItem extends StatelessWidget {
           ? const BorderRadius.vertical(bottom: Radius.circular(14))
           : BorderRadius.zero,
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF1A9BD7), size: 22),
+        leading: const Icon(Icons.info_outline_rounded,
+            color: Color(0xFF00AEEF), size: 22),
         title: Text(label,
             style: const TextStyle(
                 fontSize: 14,
