@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../pages/home_page.dart';
+import '../pages/home_logged_in_page.dart';
 import '../pages/explore_page.dart';
 import '../pages/profile_page.dart';
+import '../pages/profile_logged_in_page.dart';
 import '../widgets/bottom_navbar.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
+import '../data/auth_service.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -16,7 +19,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   DestinationCategory _exploreCategory = DestinationCategory.semua;
-  final bool _isLoggedIn = false;
 
   void _navigateToExplore(DestinationCategory category) {
     setState(() {
@@ -27,12 +29,19 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = AuthProvider.of(context);
+    final isLoggedIn = auth.isLoggedIn;
+
     final pages = [
-      HomePage(onCategoryTap: _navigateToExplore),
+      isLoggedIn
+          ? HomeLoggedInPage(onCategoryTap: _navigateToExplore)
+          : HomePage(onCategoryTap: _navigateToExplore),
       ExplorePage(initialCategory: _exploreCategory),
       const _PlaceholderPage(label: 'AI Guide'),
       const _PlaceholderPage(label: 'Favorit'),
-      const ProfilePage(),
+      isLoggedIn
+          ? const ProfileLoggedInPage()
+          : const ProfilePage(),
     ];
 
     return Scaffold(
@@ -42,7 +51,7 @@ class _MainShellState extends State<MainShell> {
       ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
-        isLoggedIn: _isLoggedIn,
+        isLoggedIn: isLoggedIn,
         onTap: (index) => setState(() => _currentIndex = index),
       ),
     );
