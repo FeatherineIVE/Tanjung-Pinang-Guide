@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../screens/auth_screen.dart';
 
+/// Halaman Profil untuk user yang BELUM LOGIN (tamu).
+/// Tanpa pengaturan akun — hanya info umum dan tombol masuk/daftar.
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -17,6 +19,7 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: const Color(0xFFE8F4FD),
       body: CustomScrollView(
         slivers: [
+          // ── Header ──────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
               width: double.infinity,
@@ -67,12 +70,11 @@ class ProfilePage extends StatelessWidget {
                         'Login untuk pengalaman yang lebih personal',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 13),
+                            color: Colors.white.withOpacity(0.8), fontSize: 13),
                       ),
                       const SizedBox(height: 28),
 
-                      // ── Masuk ke Akun → AuthScreen ──────────────────────
+                      // ── Masuk ke Akun ────────────────────────────────────
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -95,7 +97,7 @@ class ProfilePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
 
-                      // ── Daftar Akun Baru → AuthScreen ───────────────────
+                      // ── Daftar Akun Baru ─────────────────────────────────
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -123,7 +125,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
-          // ── Keuntungan Bergabung ─────────────────────────────────────────
+          // ── Keuntungan Bergabung ───────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -180,7 +182,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
-          // ── Informasi Umum ───────────────────────────────────────────────
+          // ── Informasi Umum ────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -243,6 +245,8 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
+// ─── Widgets ──────────────────────────────────────────────────────────────────
+
 class _BenefitItem extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -297,8 +301,7 @@ class _InfoMenuItem extends StatelessWidget {
           ? const BorderRadius.vertical(bottom: Radius.circular(14))
           : BorderRadius.zero,
       child: ListTile(
-        leading: const Icon(Icons.info_outline_rounded,
-            color: Color(0xFF00AEEF), size: 22),
+        leading: Icon(icon, color: const Color(0xFF00AEEF), size: 22),
         title: Text(label,
             style: const TextStyle(
                 fontSize: 14,
