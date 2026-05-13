@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/auth_screen.dart'; // <-- PERBAIKAN: Import AuthScreen ditambahkan
 
 // ── Definisi item bottom nav ──────────────────────────────────────────────────
 class _NavItem {
@@ -203,7 +204,11 @@ class _LoginRequiredSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // TODO: Navigator.push ke RegisterPage
+                // --- PERBAIKAN: Paksa buka tab Daftar ---
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1A9BD7),
@@ -225,7 +230,11 @@ class _LoginRequiredSheet extends StatelessWidget {
             child: OutlinedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // TODO: Navigator.push ke LoginPage
+                // --- PERBAIKAN: Paksa buka tab Masuk ---
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                );
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF1A9BD7),

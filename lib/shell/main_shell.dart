@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../pages/ai_itinerary_page.dart';
 import '../pages/home_page.dart';
 import '../pages/home_logged_in_page.dart';
 import '../pages/explore_page.dart';
+import '../pages/favorite_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/profile_logged_in_page.dart';
 import '../widgets/bottom_navbar.dart';
@@ -37,8 +39,8 @@ class _MainShellState extends State<MainShell> {
           ? HomeLoggedInPage(onCategoryTap: _navigateToExplore)
           : HomePage(onCategoryTap: _navigateToExplore),
       ExplorePage(initialCategory: _exploreCategory),
-      const _PlaceholderPage(label: 'AI Guide'),
-      const _PlaceholderPage(label: 'Favorit'),
+      const AIItineraryPage(),
+      const FavoritePage(),
       isLoggedIn
           ? const ProfileLoggedInPage()
           : const ProfilePage(),

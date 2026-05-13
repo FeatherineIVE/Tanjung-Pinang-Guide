@@ -20,7 +20,9 @@ class LoginRequiredSheet extends StatelessWidget {
     Navigator.pop(context); // tutup sheet
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const AuthScreen()),
+      MaterialPageRoute(
+        builder: (_) => const AuthScreen(),
+      ),
     );
   }
 
@@ -67,7 +69,7 @@ class LoginRequiredSheet extends StatelessWidget {
                   gradient: AppColors.primaryGradient,
                   borderRadius: BorderRadius.circular(14)),
               child: ElevatedButton(
-                onPressed: () => _goToAuth(context),
+                  onPressed: () => _goToAuth(context), 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -76,7 +78,7 @@ class LoginRequiredSheet extends StatelessWidget {
                 ),
                 child: const Text('Daftar Sekarang',
                     style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                        fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
           ),
@@ -87,7 +89,7 @@ class LoginRequiredSheet extends StatelessWidget {
             width: double.infinity,
             height: 50,
             child: OutlinedButton(
-              onPressed: () => _goToAuth(context),
+              onPressed: () => _goToAuth(context), 
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primaryBlue,
                 side: const BorderSide(

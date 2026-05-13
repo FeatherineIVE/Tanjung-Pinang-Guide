@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
+import '../data/favorite_service.dart';
+import '../data/auth_service.dart';
 import '../widgets/login_required_sheet.dart';
 
 class ExploreDetailPage extends StatefulWidget {
@@ -42,6 +44,18 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
   @override
   Widget build(BuildContext context) {
     final dest = widget.destination;
+    final auth = AuthProvider.of(context);
+    final favoriteService = FavoriteService();
+    final isFavorite = favoriteService.isFavorite(dest);
+
+    void _handleFavoritePress() {
+      if (!auth.isLoggedIn) {
+        LoginRequiredSheet.show(context);
+        return;
+      }
+      favoriteService.toggleFavorite(dest);
+      setState(() {});
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -67,15 +81,18 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
                   ),
                 ),
                 actions: [
-                  // Favorit → LoginRequiredSheet
+                  // Favorit Button
                   Padding(
                     padding: const EdgeInsets.only(right: 4),
                     child: CircleAvatar(
                       backgroundColor: Colors.black26,
                       child: IconButton(
-                        icon: const Icon(Icons.favorite_border_rounded,
-                            color: Colors.white, size: 20),
-                        onPressed: () => LoginRequiredSheet.show(context),
+                        icon: Icon(
+                          isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          color: isFavorite ? Colors.red : Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: _handleFavoritePress,
                       ),
                     ),
                   ),
@@ -265,20 +282,24 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Favorit → LoginRequiredSheet
+                  // Favorit (sama fungsi dengan tombol di AppBar)
                   GestureDetector(
-                    onTap: () => LoginRequiredSheet.show(context),
+                    onTap: _handleFavoritePress,
                     child: Container(
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: isFavorite ? Colors.red.shade50 : Colors.transparent,
                         borderRadius: BorderRadius.circular(14),
-                        border:
-                            Border.all(color: Colors.red.shade200, width: 1.5),
+                        border: Border.all(
+                            color: isFavorite ? Colors.red.shade200 : Colors.grey.shade300,
+                            width: 1.5),
                       ),
-                      child: Icon(Icons.favorite_border_rounded,
-                          color: Colors.red.shade400, size: 22),
+                      child: Icon(
+                        isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        color: isFavorite ? Colors.red : Colors.red.shade400,
+                        size: 22,
+                      ),
                     ),
                   ),
                 ],
