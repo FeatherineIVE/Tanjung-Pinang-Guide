@@ -16,7 +16,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE8F4FD),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: CustomScrollView(
         slivers: [
           // ── Header ──────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ class ProfilePage extends StatelessWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.2),
                           shape: BoxShape.circle,
                           border: Border.all(
                               color: Colors.white.withOpacity(0.4), width: 2),
