@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/app_toast.dart';
-import '../data/auth_service.dart';
+import '../services/auth_service.dart';
+import '../services/google_auth_service.dart';
 import '../shell/main_shell.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -165,28 +167,13 @@ class _AuthScreenState extends State<AuthScreen>
                               ? null
                               : () async {
                                   setSheetState(() => isLoading = true);
-                                  await Future.delayed(
-                                      const Duration(milliseconds: 600));
-
-                                  final auth = AuthProvider.of(ctx);
-                                  final error = auth.resetPassword(
-                                    emailCtrl.text,
-                                    newPassCtrl.text,
-                                    confirmPassCtrl.text,
-                                  );
-
+                                  // Reset password tidak tersedia via API saat ini
+                                  // Tampilkan pesan informatif
                                   setSheetState(() => isLoading = false);
-
-                                  if (error != null) {
-                                    if (ctx.mounted) {
-                                      AppToast.error(ctx, error);
-                                    }
-                                  } else {
-                                    if (ctx.mounted) {
-                                      Navigator.pop(context);
-                                      AppToast.success(ctx,
-                                          'Password berhasil direset! Silakan login');
-                                    }
+                                  if (ctx.mounted) {
+                                    Navigator.pop(context);
+                                    AppToast.info(ctx,
+                                        'Silakan hubungi admin untuk reset password');
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
@@ -248,60 +235,78 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   // ── Handle Login ──────────────────────────────────────────────────────
-  void _handleLogin() {
-    _simulateLoading(() async {
-      final auth = AuthProvider.of(context);
-      final error = auth.login(
-        _loginEmailCtrl.text,
-        _loginPassCtrl.text,
-      );
-      if (error != null) {
-        if (mounted) AppToast.error(context, error);
-      } else {
-        if (mounted) AppToast.success(context, 'Selamat datang, ${auth.userName}! 👋');
-        await Future.delayed(const Duration(milliseconds: 800));
-        _goToMain();
-      }
-    });
+  void _handleLogin() async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AuthService>();
+    final error = await auth.login(
+      email:    _loginEmailCtrl.text,
+      password: _loginPassCtrl.text,
+    );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (error != null) {
+      AppToast.error(context, error);
+    } else {
+      AppToast.success(context, 'Selamat datang, ${auth.userName}! 👋');
+      await Future.delayed(const Duration(milliseconds: 600));
+      _goToMain();
+    }
   }
 
   // ── Handle Register ───────────────────────────────────────────────────
-  void _handleRegister() {
-    _simulateLoading(() async {
-      final auth = AuthProvider.of(context);
-      final error = auth.register(
-        _regNamaCtrl.text,
-        _regEmailCtrl.text,
-        _regPassCtrl.text,
-        _regConfirmCtrl.text,
-      );
-      if (error != null) {
-        if (mounted) AppToast.error(context, error);
-      } else {
-        if (mounted) AppToast.success(context, 'Pendaftaran berhasil! 🎉');
-        await Future.delayed(const Duration(milliseconds: 800));
-        _goToMain();
-      }
-    });
+  void _handleRegister() async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AuthService>();
+    // Client-side validasi password cocok
+    if (_regPassCtrl.text != _regConfirmCtrl.text) {
+      setState(() => _isLoading = false);
+      AppToast.error(context, 'Password tidak cocok');
+      return;
+    }
+    final error = await auth.register(
+      nama:     _regNamaCtrl.text,
+      email:    _regEmailCtrl.text,
+      password: _regPassCtrl.text,
+    );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (error != null) {
+      AppToast.error(context, error);
+    } else {
+      AppToast.success(context, 'Pendaftaran berhasil! Silakan login 🎉');
+      // Setelah register, pindah ke tab login
+      setState(() => _isLogin = true);
+    }
   }
 
   // ── Handle Guest ──────────────────────────────────────────────────────
   void _handleGuest() {
-    final auth = AuthProvider.of(context);
+    final auth = context.read<AuthService>();
     auth.loginAsGuest();
     AppToast.info(context, 'Masuk sebagai Tamu');
     Future.delayed(const Duration(milliseconds: 500), _goToMain);
   }
 
-  // ── Handle Google (dummy) ─────────────────────────────────────────────
-  void _handleGoogle() {
-    _simulateLoading(() async {
-      final auth = AuthProvider.of(context);
-      auth.login('demo@demo.com', 'demo123');
-      if (mounted) AppToast.success(context, 'Login Google berhasil! 🎉');
-      await Future.delayed(const Duration(milliseconds: 800));
-      _goToMain();
-    });
+  // ── Handle Google Sign-In ──────────────────────────────────────────
+  void _handleGoogle() async {
+    setState(() => _isLoading = true);
+    final result = await GoogleAuthService.signIn();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (!result.isSuccess) {
+      AppToast.error(context, result.errorMessage ?? 'Login Google gagal');
+      return;
+    }
+
+    // Update AuthService state dengan token yang sudah disimpan GoogleAuthService
+    final auth = context.read<AuthService>();
+    await auth.restoreFromStorage();
+    if (!mounted) return;
+
+    AppToast.success(context, 'Selamat datang, ${result.user!.nama}! 👋');
+    await Future.delayed(const Duration(milliseconds: 600));
+    _goToMain();
   }
 
   @override

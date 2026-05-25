@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../data/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../screens/auth_screen.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/custom_text_field.dart';
@@ -12,14 +14,16 @@ class ProfileLoggedInPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = AuthProvider.of(context);
-    final user = auth.currentUser!;
+    final auth = context.watch<AuthService>();
+    final user = auth.currentUser;
+    if (user == null) return const SizedBox.shrink();
     // Ambil inisial dari nama
     final initials = user.nama
         .split(' ')
         .take(2)
         .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
         .join();
+    final isGoogleUser = user.isGoogleUser;
 
     return Scaffold(
       backgroundColor: const Color(0xFFE8F4FD),
@@ -86,6 +90,40 @@ class ProfileLoggedInPage extends StatelessWidget {
                         style: TextStyle(
                             color: Colors.white.withOpacity(0.8), fontSize: 13),
                       ),
+                      // Badge Google
+                      if (isGoogleUser) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.4), width: 1),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.network(
+                                'https://www.google.com/favicon.ico',
+                                width: 14,
+                                height: 14,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.g_mobiledata,
+                                    color: Colors.white,
+                                    size: 14),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text('Login via Google',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -124,13 +162,16 @@ class ProfileLoggedInPage extends StatelessWidget {
                         _InfoMenuItem(
                             icon: Icons.person_outline_rounded,
                             label: 'Edit Profil',
-                            onTap: () {}),
-                        const Divider(height: 1, indent: 56),
-                        _InfoMenuItem(
-                            icon: Icons.lock_outline_rounded,
-                            label: 'Ubah Password',
-                            onTap: () => _showChangePasswordSheet(
-                                context, auth)),
+                            onTap: () => _showEditProfileSheet(context, auth)),
+                        // Sembunyikan Ubah Password untuk user Google
+                        if (!isGoogleUser) ...[
+                          const Divider(height: 1, indent: 56),
+                          _InfoMenuItem(
+                              icon: Icons.lock_outline_rounded,
+                              label: 'Ubah Password',
+                              onTap: () => _showChangePasswordSheet(
+                                  context, auth)),
+                        ],
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.notifications_none_rounded,
@@ -141,64 +182,6 @@ class ProfileLoggedInPage extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
-          ),
-
-          // ── Aktivitas ──────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4)),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Aktivitas Kamu',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A2A3A)),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _StatItem(
-                          icon: Icons.favorite_rounded,
-                          color: const Color(0xFFEF5350),
-                          value: '12',
-                          label: 'Favorit',
-                        ),
-                        const SizedBox(width: 16),
-                        _StatItem(
-                          icon: Icons.place_rounded,
-                          color: const Color(0xFF00AEEF),
-                          value: '5',
-                          label: 'Dikunjungi',
-                        ),
-                        const SizedBox(width: 16),
-                        _StatItem(
-                          icon: Icons.star_rounded,
-                          color: const Color(0xFFFFB300),
-                          value: '230',
-                          label: 'Poin',
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
@@ -308,13 +291,15 @@ class ProfileLoggedInPage extends StatelessWidget {
                     color: Color(0xFF888888), fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              auth.logout();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const AuthScreen()),
-                (route) => false,
-              );
+              await auth.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                  (route) => false,
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE53935),
@@ -330,15 +315,12 @@ class ProfileLoggedInPage extends StatelessWidget {
     );
   }
 
-  // ── Ubah Password Sheet ────────────────────────────────────────────────
-  void _showChangePasswordSheet(BuildContext ctx, AuthService auth) {
-    final oldPassCtrl = TextEditingController();
-    final newPassCtrl = TextEditingController();
-    final confirmPassCtrl = TextEditingController();
-    bool obscureOld = true;
-    bool obscureNew = true;
-    bool obscureConfirm = true;
-    bool isLoading = false;
+  // ── Edit Profile Sheet ────────────────────────────────────────────
+  void _showEditProfileSheet(BuildContext ctx, AuthService auth) {
+    final user = auth.currentUser!;
+    final namaCtrl    = TextEditingController(text: user.nama);
+    final teleponCtrl = TextEditingController(text: user.telepon ?? '');
+    final bioCtrl     = TextEditingController(text: user.bio ?? '');
 
     showModalBottomSheet(
       context: ctx,
@@ -361,7 +343,6 @@ class ProfileLoggedInPage extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Handle bar
                     Container(
                       width: 40, height: 4,
                       margin: const EdgeInsets.only(bottom: 20),
@@ -370,70 +351,43 @@ class ProfileLoggedInPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    // Icon
                     Container(
                       width: 60, height: 60,
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
                         borderRadius: BorderRadius.circular(18),
                       ),
-                      child: const Icon(Icons.lock_outline_rounded,
+                      child: const Icon(Icons.person_outline_rounded,
                           color: Colors.white, size: 28),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Ubah Password',
+                    const Text('Edit Profil',
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textDark)),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Masukkan password lama dan password baru kamu',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
                     const SizedBox(height: 24),
-
-                    // Password lama
                     CustomTextField(
-                      label: 'Password Lama',
-                      hintText: 'Masukkan password saat ini',
-                      prefixIcon: Icons.lock_outline,
-                      isPassword: true,
-                      obscureText: obscureOld,
-                      onTogglePassword: () =>
-                          setSheetState(() => obscureOld = !obscureOld),
-                      controller: oldPassCtrl,
+                      label: 'Nama Lengkap',
+                      hintText: 'Masukkan nama',
+                      prefixIcon: Icons.person_outline,
+                      controller: namaCtrl,
                     ),
                     const SizedBox(height: 16),
-
-                    // Password baru
                     CustomTextField(
-                      label: 'Password Baru',
-                      hintText: 'Minimal 6 karakter',
-                      prefixIcon: Icons.lock_reset_rounded,
-                      isPassword: true,
-                      obscureText: obscureNew,
-                      onTogglePassword: () =>
-                          setSheetState(() => obscureNew = !obscureNew),
-                      controller: newPassCtrl,
+                      label: 'Nomor Telepon',
+                      hintText: 'Masukkan nomor telepon',
+                      prefixIcon: Icons.phone_outlined,
+                      controller: teleponCtrl,
                     ),
                     const SizedBox(height: 16),
-
-                    // Konfirmasi password
                     CustomTextField(
-                      label: 'Konfirmasi Password Baru',
-                      hintText: 'Ulangi password baru',
-                      prefixIcon: Icons.lock_outline,
-                      isPassword: true,
-                      obscureText: obscureConfirm,
-                      onTogglePassword: () =>
-                          setSheetState(() => obscureConfirm = !obscureConfirm),
-                      controller: confirmPassCtrl,
+                      label: 'Bio',
+                      hintText: 'Ceritakan tentang dirimu',
+                      prefixIcon: Icons.info_outline,
+                      controller: bioCtrl,
                     ),
                     const SizedBox(height: 24),
-
-                    // Tombol Ubah
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -443,59 +397,42 @@ class ProfileLoggedInPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(26),
                         ),
                         child: ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () async {
-                                  setSheetState(() => isLoading = true);
-                                  await Future.delayed(
-                                      const Duration(milliseconds: 600));
-
-                                  final error = auth.changePassword(
-                                    oldPassCtrl.text,
-                                    newPassCtrl.text,
-                                    confirmPassCtrl.text,
-                                  );
-
-                                  setSheetState(() => isLoading = false);
-
-                                  if (error != null) {
-                                    if (ctx.mounted) {
-                                      AppToast.error(ctx, error);
-                                    }
-                                  } else {
-                                    if (ctx.mounted) {
-                                      Navigator.pop(context);
-                                      AppToast.success(ctx,
-                                          'Password berhasil diubah! ✅');
-                                    }
-                                  }
-                                },
+                          onPressed: () async {
+                            final userSvc = ctx.read<UserService>();
+                            final error = await userSvc.updateProfile(
+                              nama:    namaCtrl.text,
+                              bio:     bioCtrl.text,
+                              telepon: teleponCtrl.text,
+                            );
+                            if (!sheetCtx.mounted) return;
+                            if (error != null) {
+                              AppToast.error(ctx, error);
+                            } else {
+                              // Sync updated name ke AuthService local state
+                              if (userSvc.profile != null) {
+                                auth.updateLocalUser(userSvc.profile!);
+                              }
+                              Navigator.pop(sheetCtx);
+                              AppToast.success(ctx, 'Profil berhasil diperbarui ✅');
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(26)),
                           ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2.5),
-                                )
-                              : const Text('Ubah Password',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white)),
+                          child: const Text('Simpan Perubahan',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-
-                    // Batal
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(sheetCtx),
                       child: Text('Batal',
                           style: TextStyle(
                               fontSize: 14,
@@ -511,49 +448,12 @@ class ProfileLoggedInPage extends StatelessWidget {
       },
     );
   }
-}
 
-// ─── Shared Widgets ───────────────────────────────────────────────────────────
-
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String value;
-  final String label;
-
-  const _StatItem({
-    required this.icon,
-    required this.color,
-    required this.value,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 6),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF666666),
-                    fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ),
-    );
+  // ── Ubah Password Sheet ────────────────────────────────────────────────
+  void _showChangePasswordSheet(BuildContext ctx, AuthService auth) {
+    // Password change tidak tersedia via backend saat ini
+    // Tampilkan informasi
+    AppToast.info(ctx, 'Fitur ubah password sedang dalam pengembangan');
   }
 }
 

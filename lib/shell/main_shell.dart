@@ -9,7 +9,9 @@ import '../pages/profile_logged_in_page.dart';
 import '../widgets/bottom_navbar.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
-import '../data/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+import '../services/bookmark_service.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -21,6 +23,40 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   DestinationCategory _exploreCategory = DestinationCategory.semua;
+  bool _wasLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch bookmarks saat pertama kali masuk jika sudah login
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthService>();
+      _wasLoggedIn = auth.isLoggedIn;
+      if (auth.isLoggedIn) {
+        context.read<BookmarkService>().fetchAll();
+      }
+      // Listen perubahan auth state
+      auth.addListener(_onAuthChanged);
+    });
+  }
+
+  @override
+  void dispose() {
+    context.read<AuthService>().removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    final auth = context.read<AuthService>();
+    if (auth.isLoggedIn && !_wasLoggedIn) {
+      // Baru login — fetch bookmarks
+      context.read<BookmarkService>().fetchAll();
+    } else if (!auth.isLoggedIn && _wasLoggedIn) {
+      // Baru logout — clear bookmarks
+      context.read<BookmarkService>().clear();
+    }
+    _wasLoggedIn = auth.isLoggedIn;
+  }
 
   void _navigateToExplore(DestinationCategory category) {
     setState(() {
@@ -31,7 +67,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = AuthProvider.of(context);
+    final auth = context.watch<AuthService>();
     final isLoggedIn = auth.isLoggedIn;
 
     final pages = [

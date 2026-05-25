@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
+import '../services/destination_service.dart';
+import '../models/destination_model.dart';
 import 'explore_detail_page.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -26,6 +29,13 @@ class _ExplorePageState extends State<ExplorePage> {
     _selectedCategory = widget.initialCategory;
     _searchController.addListener(
         () => setState(() => _searchQuery = _searchController.text.toLowerCase()));
+    // Fetch dari backend jika belum ada data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final svc = context.read<DestinationService>();
+      if (svc.destinations.isEmpty) {
+        svc.fetchAll();
+      }
+    });
   }
 
   // ── Saat initialCategory berubah (user tap kategori di home) ──────────────
@@ -43,26 +53,33 @@ class _ExplorePageState extends State<ExplorePage> {
     super.dispose();
   }
 
-  List<DestinationData> get _filtered {
-    return allDestinations.where((d) {
+
+  List<DestinationModel> _filteredApi(List<DestinationModel> all) {
+    return all.where((d) {
+      // Cocokkan kategori: frontend pakai 'pantai', backend pakai 'Wisata Pantai'
       final matchCat = _selectedCategory == DestinationCategory.semua ||
-          d.category == _selectedCategory;
+          d.kategori.toLowerCase().contains(_selectedCategory.label.toLowerCase());
       final matchSearch = _searchQuery.isEmpty ||
-          d.title.toLowerCase().contains(_searchQuery) ||
-          d.shortDesc.toLowerCase().contains(_searchQuery) ||
-          d.lokasi.toLowerCase().contains(_searchQuery);
+          d.nama.toLowerCase().contains(_searchQuery) ||
+          (d.deskripsi?.toLowerCase().contains(_searchQuery) ?? false) ||
+          (d.lokasi?.toLowerCase().contains(_searchQuery) ?? false);
       return matchCat && matchSearch;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
+    final svc = context.watch<DestinationService>();
+    // Selalu pakai data API — tidak ada fallback ke dummy
+    final apiResults = _filteredApi(svc.destinations);
+    final totalResults = apiResults.length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // ── Fixed header: tidak collapsible, tidak perlu di-scroll ────────────
-      body: Column(
+      body: RefreshIndicator(
+        onRefresh: () => svc.fetchAll(),
+        color: AppColors.primaryBlue,
+        child: Column(
         children: [
           // ── Header Biru (fixed) ──────────────────────────────────────────
           Container(
@@ -244,68 +261,203 @@ class _ExplorePageState extends State<ExplorePage> {
           // ── Jumlah hasil ─────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text('${results.length} destinasi ditemukan',
-                style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textGrey,
-                    fontWeight: FontWeight.w500)),
+            child: Row(
+              children: [
+                Text('$totalResults destinasi ditemukan',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w500)),
+                if (svc.isLoading) ...[
+                  const SizedBox(width: 10),
+                  const SizedBox(
+                    width: 14, height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
 
           // ── List Destinasi (scrollable) ───────────────────────────────────
           Expanded(
-            child: results.isEmpty
-                ? Center(
+            child: svc.isLoading && svc.destinations.isEmpty
+                ? const Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryBlue.withOpacity(0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.search_off_rounded,
-                              size: 40, color: AppColors.primaryBlue),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text('Destinasi tidak ditemukan',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textDark)),
-                        const SizedBox(height: 6),
-                        Text('Coba kata kunci lain',
-                            style: TextStyle(
-                                fontSize: 13, color: Colors.grey[500])),
+                        CircularProgressIndicator(),
+                        SizedBox(height: 12),
+                        Text('Memuat destinasi...'),
                       ],
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    itemCount: results.length,
-                    itemBuilder: (context, index) {
-                      final dest = results[index];
-                      return _DestinationListCard(
-                        destination: dest,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ExploreDetailPage(destination: dest),
-                          ),
+                : (totalResults == 0 && !svc.isLoading)
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryBlue.withOpacity(0.08),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.search_off_rounded,
+                                  size: 40, color: AppColors.primaryBlue),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text('Destinasi tidak ditemukan',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textDark)),
+                            const SizedBox(height: 6),
+                            Text('Coba kata kunci lain',
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey[500])),
+                          ],
                         ),
-                      );
-                    },
-                  ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        itemCount: apiResults.length,
+                        itemBuilder: (context, index) {
+                          final dest = apiResults[index];
+                          return _DestinationListCardApi(
+                            destination: dest,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ExploreDetailPage(destinationModel: dest),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
+        ), // Column
+      ), // RefreshIndicator
+    );
+  }
+}
+
+// ── Destination Card dari API ─────────────────────────────────────────────────────────────────
+class _DestinationListCardApi extends StatelessWidget {
+  final DestinationModel destination;
+  final VoidCallback onTap;
+  const _DestinationListCardApi({required this.destination, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final dest = destination;
+    final isGratis = dest.hargaTiket?.toLowerCase().contains('gratis') ?? false;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Image.asset(
+                    dest.displayImagePath,
+                    height: 170, width: double.infinity, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 170,
+                      color: dest.categoryColor.withOpacity(0.15),
+                      child: Center(child: Icon(Icons.image_not_supported_rounded, color: dest.categoryColor, size: 48)),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12, left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: dest.categoryColor, borderRadius: BorderRadius.circular(20)),
+                    child: Text(dest.kategori,
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                Positioned(
+                  top: 12, right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isGratis ? const Color(0xFF66BB6A) : const Color(0xFFFFB300),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(isGratis ? 'Gratis' : (dest.hargaTiket ?? ''),
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(dest.nama,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    const Icon(Icons.location_on_rounded, size: 13, color: AppColors.primaryBlue),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(dest.lokasi ?? '',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  Text(dest.deskripsi ?? '',
+                      style: const TextStyle(fontSize: 13, color: AppColors.textGrey, height: 1.4),
+                      maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    _MiniChip(icon: Icons.star_rounded, label: dest.ratingFormatted, color: const Color(0xFFFFB300)),
+                    const SizedBox(width: 6),
+                    _MiniChip(icon: Icons.access_time_rounded, label: dest.jamBuka ?? '-', color: const Color(0xFF66BB6A)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(gradient: AppColors.buttonGradient, borderRadius: BorderRadius.circular(20)),
+                      child: const Text('Lihat Detail',
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ── Destination List Card ─────────────────────────────────────────────────────
+// ── Destination List Card (Lokal) ──────────────────────────────────────────────────────
 class _DestinationListCard extends StatelessWidget {
   final DestinationData destination;
   final VoidCallback onTap;

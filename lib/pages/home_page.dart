@@ -1,14 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
+import '../models/destination_model.dart';
 import '../screens/auth_screen.dart';
+import '../services/destination_service.dart';
 import '../widgets/login_required_sheet.dart';
 import 'explore_detail_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final void Function(DestinationCategory category) onCategoryTap;
 
   const HomePage({super.key, required this.onCategoryTap});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final svc = context.read<DestinationService>();
+      if (svc.destinations.isEmpty) {
+        svc.fetchAll();
+      }
+    });
+  }
 
   void _goToAuth(BuildContext context) {
     Navigator.push(
@@ -19,11 +38,11 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final popularDestinations = [
-      allDestinations.firstWhere((d) => d.title == 'Pantai Trikora'),
-      allDestinations.firstWhere((d) => d.title == 'Masjid Raya Sultan Riau'),
-      allDestinations.firstWhere((d) => d.title == 'Pulau Penyengat'),
-    ];
+    final destSvc = context.watch<DestinationService>();
+    final allDests = destSvc.destinations;
+    final popularDestinations = allDests.isNotEmpty
+        ? allDests.take(3).toList()
+        : <DestinationModel>[];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -42,13 +61,11 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // App bar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             children: [
-                              // ── Logo putih menggantikan icon ──────────────
                               Container(
                                 width: 36,
                                 height: 36,
@@ -76,7 +93,7 @@ class HomePage extends StatelessWidget {
                                       fontWeight: FontWeight.bold)),
                             ],
                           ),
-                          // Tombol Masuk → AuthScreen
+                          // Tombol Masuk
                           GestureDetector(
                             onTap: () => _goToAuth(context),
                             child: Container(
@@ -99,8 +116,7 @@ class HomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 32),
                       const Text('Selamat Datang! 👋',
-                          style:
-                              TextStyle(color: Colors.white70, fontSize: 14)),
+                          style: TextStyle(color: Colors.white70, fontSize: 14)),
                       const SizedBox(height: 4),
                       const Text('Jelajahi\nTanjung Pinang',
                           style: TextStyle(
@@ -109,10 +125,8 @@ class HomePage extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               height: 1.2)),
                       const SizedBox(height: 20),
-                      // Search bar → buka explore
                       GestureDetector(
-                        onTap: () =>
-                            onCategoryTap(DestinationCategory.semua),
+                        onTap: () => widget.onCategoryTap(DestinationCategory.semua),
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -190,29 +204,25 @@ class HomePage extends StatelessWidget {
                             icon: Icons.account_balance_rounded,
                             label: 'Sejarah',
                             color: const Color(0xFFFF7043),
-                            onTap: () => onCategoryTap(
-                                DestinationCategory.sejarah),
+                            onTap: () => widget.onCategoryTap(DestinationCategory.sejarah),
                           ),
                           _CategoryItem(
                             icon: Icons.beach_access_rounded,
                             label: 'Pantai',
                             color: AppColors.primaryBlue,
-                            onTap: () => onCategoryTap(
-                                DestinationCategory.pantai),
+                            onTap: () => widget.onCategoryTap(DestinationCategory.pantai),
                           ),
                           _CategoryItem(
                             icon: Icons.park_rounded,
                             label: 'Alam',
                             color: const Color(0xFF66BB6A),
-                            onTap: () =>
-                                onCategoryTap(DestinationCategory.alam),
+                            onTap: () => widget.onCategoryTap(DestinationCategory.alam),
                           ),
                           _CategoryItem(
                             icon: Icons.restaurant_rounded,
                             label: 'Kuliner',
                             color: const Color(0xFFAB47BC),
-                            onTap: () => onCategoryTap(
-                                DestinationCategory.kuliner),
+                            onTap: () => widget.onCategoryTap(DestinationCategory.kuliner),
                           ),
                         ],
                       ),
@@ -306,7 +316,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            // ── AI Guide ──────────────────────────────────────────────────
+            // ── AI Guide (preview — tidak interaktif) ─────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Container(
@@ -383,7 +393,6 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Suggest chips → LoginRequiredSheet
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -403,7 +412,6 @@ class HomePage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    // Tombol bawah AI → AuthScreen
                     Row(
                       children: [
                         Expanded(
@@ -463,31 +471,44 @@ class HomePage extends StatelessWidget {
                 children: [
                   _SectionHeader(
                     title: 'Destinasi Populer',
-                    onSeeAll: () =>
-                        onCategoryTap(DestinationCategory.semua),
+                    onSeeAll: () => widget.onCategoryTap(DestinationCategory.semua),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 210,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      itemCount: popularDestinations.length,
-                      itemBuilder: (context, index) {
-                        final dest = popularDestinations[index];
-                        return _DestinationCard(
-                          destination: dest,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  ExploreDetailPage(destination: dest),
+                  if (destSvc.isLoading)
+                    const SizedBox(
+                      height: 210,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (popularDestinations.isEmpty)
+                    const SizedBox(
+                      height: 80,
+                      child: Center(
+                        child: Text('Tidak dapat memuat destinasi',
+                            style: TextStyle(color: AppColors.textGrey)),
+                      ),
+                    )
+                  else
+                    SizedBox(
+                      height: 210,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        itemCount: popularDestinations.length,
+                        itemBuilder: (context, index) {
+                          final dest = popularDestinations[index];
+                          return _DestinationModelCard(
+                            destination: dest,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                // Langsung pakai destinationModel → favorite langsung bekerja
+                                builder: (_) => ExploreDetailPage(destinationModel: dest),
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -558,8 +579,8 @@ class _SuggestChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.primaryBlue.withOpacity(0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: AppColors.primaryBlue.withOpacity(0.3), width: 1),
+          border:
+              Border.all(color: AppColors.primaryBlue.withOpacity(0.3), width: 1),
         ),
         child: Text(label,
             style: const TextStyle(
@@ -600,11 +621,12 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _DestinationCard extends StatelessWidget {
-  final DestinationData destination;
+/// Card untuk DestinationModel dari backend
+class _DestinationModelCard extends StatelessWidget {
+  final DestinationModel destination;
   final VoidCallback onTap;
 
-  const _DestinationCard({required this.destination, required this.onTap});
+  const _DestinationModelCard({required this.destination, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -631,15 +653,15 @@ class _DestinationCard extends StatelessWidget {
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
               child: Image.asset(
-                dest.imagePath,
+                'assets/images/onboarding1.jpg',
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
                   height: 120,
-                  color: dest.bgColor.withOpacity(0.2),
+                  color: dest.categoryColor.withOpacity(0.2),
                   child: Icon(Icons.image_not_supported_rounded,
-                      color: dest.bgColor, size: 40),
+                      color: dest.categoryColor, size: 40),
                 ),
               ),
             ),
@@ -648,7 +670,7 @@ class _DestinationCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(dest.title,
+                  Text(dest.nama,
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -656,7 +678,7 @@ class _DestinationCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
-                  Text(dest.lokasi.split(',').first,
+                  Text(dest.lokasi?.split(',').first ?? '',
                       style: const TextStyle(
                           fontSize: 11, color: AppColors.textGrey),
                       maxLines: 1,
@@ -667,31 +689,34 @@ class _DestinationCard extends StatelessWidget {
                         color: Color(0xFFFFB300), size: 14),
                     const SizedBox(width: 3),
                     Text(
-                        dest.nearby.isNotEmpty
-                            ? dest.nearby.first.rating.toString()
+                        dest.rataRating != null
+                            ? dest.rataRating!.toStringAsFixed(1)
                             : '4.8',
                         style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textDark)),
                     const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF66BB6A).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        dest.hargaTiket.toLowerCase().contains('gratis')
-                            ? 'Gratis'
-                            : dest.hargaTiket.split('/').first,
-                        style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF66BB6A),
-                            fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF66BB6A).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          (dest.hargaTiket?.toLowerCase().contains('gratis') ??
+                                  false)
+                              ? 'Gratis'
+                              : (dest.hargaTiket?.split('/').first ?? ''),
+                          style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF66BB6A),
+                              fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   ]),
@@ -703,4 +728,4 @@ class _DestinationCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

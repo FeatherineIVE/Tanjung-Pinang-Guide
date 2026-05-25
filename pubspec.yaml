@@ -13,6 +13,24 @@ dependencies:
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.0
 
+  # HTTP & API
+  http: ^1.2.2
+
+  # Local storage (JWT token)
+  shared_preferences: ^2.3.2
+
+  # State management
+  provider: ^6.1.2
+
+  # Google Sign-In
+  google_sign_in: ^6.2.1
+
+  # Crypto (untuk derive password dari Google ID)
+  crypto: ^3.0.3
+  firebase_core: ^4.9.0
+  firebase_auth: ^6.5.1
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

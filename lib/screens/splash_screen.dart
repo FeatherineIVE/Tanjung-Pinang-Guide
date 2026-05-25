@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
+import '../services/auth_service.dart';
+import '../core/network/token_storage.dart';
+import '../shell/main_shell.dart';
 import 'onboarding_screen.dart';
+import 'auth_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,22 +44,49 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward();
+    _initAndNavigate();
+  }
 
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const OnboardingScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-        );
+  Future<void> _initAndNavigate() async {
+    final auth = context.read<AuthService>();
+
+    // Tunggu splash 2.5 detik DAN AuthService.init() selesai
+    await Future.wait([
+      Future.delayed(const Duration(milliseconds: 2500)),
+      Future.doWhile(() async {
+        await Future.delayed(const Duration(milliseconds: 50));
+        return auth.isInitializing;
+      }),
+    ]);
+
+    if (!mounted) return;
+
+    Widget destination;
+
+    if (auth.isLoggedIn) {
+      // User masih punya sesi valid → langsung masuk
+      destination = const MainShell();
+    } else {
+      // Cek apakah user pernah login sebelumnya di device ini
+      final everLoggedIn = await TokenStorage.hasEverLoggedIn();
+      if (everLoggedIn) {
+        // Pernah login tapi token habis → langsung ke halaman login (skip onboarding)
+        destination = const AuthScreen();
+      } else {
+        // Belum pernah login sama sekali → tampilkan onboarding
+        destination = const OnboardingScreen();
       }
-    });
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => destination,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 600),
+      ),
+    );
   }
 
   @override
@@ -84,9 +116,13 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 120,
                   height: 120,
                   fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.explore_rounded,
+                    size: 80,
+                    color: AppColors.primaryBlue,
+                  ),
                 ),
                 const SizedBox(height: 24),
-                // App title
                 const Text(
                   'Tanjung Pinang\nGuide',
                   textAlign: TextAlign.center,
