@@ -9,15 +9,23 @@
       "client_info": {
         "mobilesdk_app_id": "1:583249880017:android:daddff8d358311d536b6f0",
         "android_client_info": {
-          "package_name": "com.example.tanjung_pinang_guide"
+          "package_name": "com.example.tanjung_pinang_guide_baru"
         }
       },
       "oauth_client": [
         {
+          "client_id": "583249880017-b0e3mg2gnjaves3r3si0gb1nb7c4dnv2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tanjung_pinang_guide_baru",
+            "certificate_hash": "4202b800af2d928812457fa3b954994f0f5d12ec"
+          }
+        },
+        {
           "client_id": "583249880017-uifgqkgadpnunoqtics540fmu7bkbafl.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.tanjung_pinang_guide",
+            "package_name": "com.example.tanjung_pinang_guide_baru",
             "certificate_hash": "9f655870e23d1dcd582a86b9a94cea489b844d12"
           }
         },

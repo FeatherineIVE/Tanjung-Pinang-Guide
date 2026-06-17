@@ -3,7 +3,7 @@ import '../core/constants/api_constants.dart';
 import '../core/network/api_client.dart';
 import '../core/network/token_storage.dart';
 import '../models/user_model.dart';
-import 'google_auth_service.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// AuthService terhubung ke backend REST API.
 /// Menggantikan auth_service.dart (dummy) dengan real API calls + JWT.
@@ -16,6 +16,11 @@ class AuthService extends ChangeNotifier {
   bool _isLoading      = false;
   bool _isInitializing = true; // true sampai init() selesai
   String? _error;
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: '353370706436-o2jf2bug2hnm83o77evdpqpv7ntqv5i7.apps.googleusercontent.com',
+    serverClientId: '353370706436-6ps9qad36vvq1ogditd8hvji5ucn7i1k.apps.googleusercontent.com',
+  );
 
   AuthService({ApiClient? api}) : _api = api ?? ApiClient() {
     // Pasang callback auto-logout jika sesi expired
@@ -138,9 +143,86 @@ class AuthService extends ChangeNotifier {
       _currentUser = tokens.user;
       _isLoggedIn  = true;
       _isGuest     = false;
-      _setLoading(false);
+      _isLoading   = false;
       notifyListeners();
       return null;
+    } on ApiException catch (e) {
+      _setLoading(false);
+      return e.message;
+    } catch (e) {
+      _setLoading(false);
+      return 'Gagal terhubung ke server. Periksa koneksi internet.';
+    }
+  }
+
+  // ── Google Login ──────────────────────────────────────────────────────────
+  Future<String?> loginWithGoogle({bool isRegister = false}) async {
+    _setLoading(true);
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        _setLoading(false);
+        return 'Login Google dibatalkan';
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        _setLoading(false);
+        await _googleSignIn.signOut();
+        return 'Gagal mendapatkan token Google.';
+      }
+
+      final res = await _api.post(
+        ApiConstants.googleLogin,
+        body: {
+          'credential': idToken,
+          'mode': isRegister ? 'register' : 'login',
+        },
+      );
+
+      final tokens = AuthTokens.fromJson(res['data'] as Map<String, dynamic>);
+
+      // Simpan token dan user info
+      await TokenStorage.saveAccessToken(tokens.token);
+      await TokenStorage.saveRefreshToken(tokens.refreshToken);
+      await TokenStorage.saveUserInfo(
+        id:      tokens.user.id,
+        nama:    tokens.user.nama,
+        email:   tokens.user.email,
+        telepon: tokens.user.telepon,
+        isGoogleUser: true,
+      );
+
+      _currentUser = tokens.user;
+      _isLoggedIn  = true;
+      _isGuest     = false;
+      _isLoading   = false;
+      notifyListeners();
+      return null;
+    } on ApiException catch (e) {
+      _setLoading(false);
+      await _googleSignIn.signOut();
+      return e.message;
+    } catch (e) {
+      print("Google Login Error: $e");
+      _setLoading(false);
+      await _googleSignIn.signOut();
+      return 'Error: $e';
+    }
+  }
+
+  // ── Lupa Password ─────────────────────────────────────────────────────────
+  Future<String?> forgotPassword(String email) async {
+    _setLoading(true);
+    try {
+      await _api.post(
+        ApiConstants.forgotPassword,
+        body: {'email': email.trim().toLowerCase()},
+      );
+      _setLoading(false);
+      return null; // Sukses, pesan akan ada di res['message'] tapi kita return null untuk sukses
     } on ApiException catch (e) {
       _setLoading(false);
       return e.message;
@@ -172,8 +254,9 @@ class AuthService extends ChangeNotifier {
       // Logout lokal tetap berjalan walau server error
     }
 
-    // Sign out dari Google jika user login via Google
-    await GoogleAuthService.signOut();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
 
     await TokenStorage.clearAll();
     _currentUser = null;
@@ -185,7 +268,10 @@ class AuthService extends ChangeNotifier {
   // ── Auto-logout (session expired / refresh token habis) ────────────────────────
   Future<void> _handleSessionExpired() async {
     await TokenStorage.clearAll();
-    await GoogleAuthService.signOut();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
+    
     _currentUser = null;
     _isLoggedIn  = false;
     _isGuest     = false;
@@ -195,6 +281,13 @@ class AuthService extends ChangeNotifier {
   // ── Update User Lokal (setelah update profil) ───────────────────────────
   void updateLocalUser(UserModel user) {
     _currentUser = user;
+    TokenStorage.saveUserInfo(
+      id: user.id,
+      nama: user.nama,
+      email: user.email,
+      telepon: user.telepon,
+      isGoogleUser: user.isGoogleUser,
+    );
     notifyListeners();
   }
 
