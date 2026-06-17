@@ -6,37 +6,42 @@
 
 class ApiConstants {
   // ── Base URL ─────────────────────────────────────────────────────────────
-  // Android emulator menggunakan 10.0.2.2 sebagai alias localhost host machine
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  // URL Backend Hosting dari VPS Teman Anda
+  static const String baseUrl = 'https://svarna.infinitelearningstudent.id';
 
   // ── Auth Endpoints ────────────────────────────────────────────────────────
-  static const String register   = '/api/auth/register';
-  static const String login      = '/api/auth/login';
-  static const String logout     = '/api/auth/logout';
-  static const String refresh    = '/api/auth/refresh';
-  static const String googleAuth = '/api/auth/google';
-
-  // ── Google Sign-In ─────────────────────────────────────────────────────────────────
-  /// Web Client ID dari Google Cloud Console → APIs & Services → Credentials
-  /// → OAuth 2.0 Client IDs → Web client (auto created by Google Service)
-  /// Kosong = gunakan accessToken fallback (tetap berfungsi tanpa konfigurasi ini)
-  static const String googleWebClientId = '';
+  static const String register       = '/api/auth/register';
+  static const String login          = '/api/auth/login';
+  static const String googleLogin    = '/api/auth/google';
+  static const String forgotPassword = '/api/auth/forgot-password';
+  static const String logout         = '/api/auth/logout'; // Keep if frontend uses local logout or we might not need it for JWT
+  static const String refresh        = '/api/auth/refresh';
 
   // ── Destination Endpoints ─────────────────────────────────────────────────
-  static const String destinations     = '/api/destinations';
+  static const String destinations = '/api/destinations';
   static String destinationById(int id) => '/api/destinations/$id';
-  static String destinationBySlug(String slug) => '/api/destinations/slug/$slug';
+  static String destinationBySlug(String slug) => '/api/destinations/$slug'; // Note: Backend router says router.get("/:slug", getDestinationBySlug)
+  static String destinationVisit(int id) => '/api/destinations/$id/visit';
 
-  // ── Bookmark Endpoints ────────────────────────────────────────────────────
-  static const String bookmarks = '/api/bookmarks';
-  static String bookmarkById(int id) => '/api/bookmarks/$id';
+  // ── Favorite Endpoints ────────────────────────────────────────────────────
+  static const String favorites = '/api/favorites';
+  static String checkFavorite(int destinationId) => '/api/favorites/check/$destinationId';
+  static String removeFavorite(int destinationId) => '/api/favorites/$destinationId';
 
-  // ── Rating Endpoints ──────────────────────────────────────────────────────
-  static String ratingsByDestination(int id) => '/api/destinations/$id/ratings';
+  // ── Review Endpoints ──────────────────────────────────────────────────────
+  static const String reviews = '/api/reviews';
+  static String reviewsByDestination(int id) => '/api/reviews/destination/$id';
+  static String reviewById(int id) => '/api/reviews/$id';
 
-  // ── User Endpoints ────────────────────────────────────────────────────────
-  static const String profile = '/api/users/me';
+  // ── User / Profile Endpoints ──────────────────────────────────────────────
+  static String profileStats(int userId) => '/api/profile/$userId/stats';
+  static String updateProfile(int userId) => '/api/profile/$userId';
+  
+  // ── Itinerary Endpoints ───────────────────────────────────────────────────
+  static const String generateItinerary = '/api/itineraries/generate';
+  static String userItineraries(int userId) => '/api/itineraries/user/$userId';
+  static String itineraryById(int id) => '/api/itineraries/$id';
 
-  // ── Chat Endpoint ─────────────────────────────────────────────────────────
-  static const String chat = '/api/chat';
+  // ── Travel Guide Endpoints ────────────────────────────────────────────────
+  static const String travelGuides = '/api/travel-guides';
 }
