@@ -11,8 +11,24 @@ import 'notification_page.dart';
 
 /// Halaman Profil untuk user yang SUDAH LOGIN.
 /// Menampilkan data user, pengaturan akun, aktivitas, dan info umum.
-class ProfileLoggedInPage extends StatelessWidget {
+class ProfileLoggedInPage extends StatefulWidget {
   const ProfileLoggedInPage({super.key});
+
+  @override
+  State<ProfileLoggedInPage> createState() => _ProfileLoggedInPageState();
+}
+
+class _ProfileLoggedInPageState extends State<ProfileLoggedInPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = context.read<AuthService>().currentUser;
+      if (user != null) {
+        context.read<UserService>().fetchProfileStats(user.id);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -199,15 +215,6 @@ class ProfileLoggedInPage extends StatelessWidget {
                             icon: Icons.person_outline_rounded,
                             label: 'Edit Profil',
                             onTap: () => _showEditProfileSheet(context, auth)),
-                        // Sembunyikan Ubah Password untuk user Google
-                        if (!isGoogleUser) ...[
-                          const Divider(height: 1, indent: 56),
-                          _InfoMenuItem(
-                              icon: Icons.lock_outline_rounded,
-                              label: 'Ubah Password',
-                              onTap: () => _showChangePasswordSheet(
-                                  context, auth)),
-                        ],
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.notifications_none_rounded,
@@ -462,7 +469,7 @@ class ProfileLoggedInPage extends StatelessWidget {
                                 telepon: teleponCtrl.text,
                               ));
                               Navigator.pop(sheetCtx);
-                              AppToast.success(ctx, 'Profil berhasil diperbarui ✅');
+                              AppToast.success(ctx, 'Profil berhasil diperbarui');
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -496,13 +503,6 @@ class ProfileLoggedInPage extends StatelessWidget {
         );
       },
     );
-  }
-
-  // ── Ubah Password Sheet ────────────────────────────────────────────────
-  void _showChangePasswordSheet(BuildContext ctx, AuthService auth) {
-    // Password change tidak tersedia via backend saat ini
-    // Tampilkan informasi
-    AppToast.info(ctx, 'Fitur ubah password sedang dalam pengembangan');
   }
 }
 

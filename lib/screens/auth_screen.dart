@@ -146,7 +146,7 @@ class _AuthScreenState extends State<AuthScreen>
                                       AppToast.error(ctx, error);
                                     } else {
                                       Navigator.pop(context);
-                                      AppToast.success(ctx, 'Link reset password telah dikirim ke email Anda.');
+                                      AppToast.success(ctx, 'Link reset password telah dikirim ke email Anda. Silakan cek juga folder spam atau junk jika tidak masuk.');
                                     }
                                   }
                                 },
@@ -215,7 +215,7 @@ class _AuthScreenState extends State<AuthScreen>
     if (error != null) {
       AppToast.error(context, error);
     } else {
-      AppToast.success(context, 'Selamat datang, ${auth.userName}! 👋');
+      AppToast.success(context, 'Selamat datang, ${auth.userName}!');
       await Future.delayed(const Duration(milliseconds: 600));
       _goToMain();
     }
@@ -234,7 +234,7 @@ class _AuthScreenState extends State<AuthScreen>
         AppToast.error(context, error);
       }
     } else {
-      AppToast.success(context, isRegister ? 'Pendaftaran dengan Google berhasil! 🎉' : 'Selamat datang, ${auth.userName}! 👋');
+      AppToast.success(context, isRegister ? 'Pendaftaran dengan Google berhasil!' : 'Selamat datang, ${auth.userName}!');
       await Future.delayed(const Duration(milliseconds: 600));
       _goToMain();
     }
@@ -260,7 +260,7 @@ class _AuthScreenState extends State<AuthScreen>
     if (error != null) {
       AppToast.error(context, error);
     } else {
-      AppToast.success(context, 'Pendaftaran berhasil! Silakan login 🎉');
+      AppToast.success(context, 'Pendaftaran berhasil! Silakan login');
       // Setelah register, pindah ke tab login
       setState(() => _isLogin = true);
     }
@@ -578,10 +578,10 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   Widget _buildDivider() {
-    return Row(
+    return const Row(
       children: [
         Expanded(child: Divider(color: AppColors.greyBorder, thickness: 1)),
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Text('atau', style: TextStyle(fontSize: 14, color: AppColors.textGrey)),
         ),
@@ -631,12 +631,12 @@ class _AuthScreenState extends State<AuthScreen>
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person_outline, color: AppColors.primaryBlue, size: 22),
-            const SizedBox(width: 12),
-            const Text('Lanjutkan sebagai Tamu',
+            Icon(Icons.person_outline, color: AppColors.primaryBlue, size: 22),
+            SizedBox(width: 12),
+            Text('Lanjutkan sebagai Tamu',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textDark)),
           ],
         ),

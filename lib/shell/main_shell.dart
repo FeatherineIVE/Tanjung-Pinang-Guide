@@ -7,7 +7,6 @@ import '../pages/favorite_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/profile_logged_in_page.dart';
 import '../widgets/bottom_navbar.dart';
-import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -92,7 +91,15 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         isLoggedIn: isLoggedIn,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          if (index == 4 && isLoggedIn) {
+            final user = auth.currentUser;
+            if (user != null) {
+              context.read<UserService>().fetchProfileStats(user.id);
+            }
+          }
+        },
       ),
     );
   }
