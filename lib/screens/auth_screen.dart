@@ -216,7 +216,6 @@ class _AuthScreenState extends State<AuthScreen>
       AppToast.error(context, error);
     } else {
       AppToast.success(context, 'Selamat datang, ${auth.userName}!');
-      await Future.delayed(const Duration(milliseconds: 600));
       _goToMain();
     }
   }
@@ -235,7 +234,6 @@ class _AuthScreenState extends State<AuthScreen>
       }
     } else {
       AppToast.success(context, isRegister ? 'Pendaftaran dengan Google berhasil!' : 'Selamat datang, ${auth.userName}!');
-      await Future.delayed(const Duration(milliseconds: 600));
       _goToMain();
     }
   }
@@ -271,7 +269,7 @@ class _AuthScreenState extends State<AuthScreen>
     final auth = context.read<AuthService>();
     auth.loginAsGuest();
     AppToast.info(context, 'Masuk sebagai Tamu');
-    Future.delayed(const Duration(milliseconds: 500), _goToMain);
+    _goToMain();
   }
 
 
