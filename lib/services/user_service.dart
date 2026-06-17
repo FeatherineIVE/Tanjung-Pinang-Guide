@@ -14,51 +14,72 @@ class UserService extends ChangeNotifier {
 
   UserService({ApiClient? api}) : _api = api ?? ApiClient();
 
+  Map<String, dynamic> _stats = {
+    'viewedCount': 0,
+    'savedCount': 0,
+    'averageRating': 0.0,
+    'reviewCount': 0,
+  };
+
   // ── Getters ───────────────────────────────────────────────────────────────
   UserModel? get profile   => _profile;
   bool get isLoading       => _isLoading;
   bool get isUpdating      => _isUpdating;
   String? get error        => _error;
+  Map<String, dynamic> get stats => _stats;
 
-  // ── Get Profile ───────────────────────────────────────────────────────────
-  Future<void> fetchProfile() async {
+  // ── Set Local Profile (from AuthService) ──────────────────────────────────
+  void setLocalProfile(UserModel user) {
+    _profile = user;
+    notifyListeners();
+  }
+
+  // ── Get Profile Stats ─────────────────────────────────────────────────────
+  Future<void> fetchProfileStats(int userId) async {
     _setLoading(true);
     _error = null;
     try {
-      final res = await _api.get(ApiConstants.profile, withAuth: true);
-      _profile = UserModel.fromJson(res['data'] as Map<String, dynamic>);
+      final res = await _api.get(ApiConstants.profileStats(userId), withAuth: true);
+      if (res['success'] == true) {
+        _stats = res['data'] as Map<String, dynamic>;
+      }
     } on ApiException catch (e) {
       _error = e.message;
     } catch (_) {
-      _error = 'Gagal memuat profil.';
+      _error = 'Gagal memuat statistik profil.';
     }
     _setLoading(false);
   }
 
   // ── Update Profile ────────────────────────────────────────────────────────
-  /// Mengembalikan null jika sukses, atau pesan error.
   Future<String?> updateProfile({
+    required int userId,
     required String nama,
     String? bio,
     String? telepon,
   }) async {
     _isUpdating = true;
-    _error      = null;
     notifyListeners();
+
     try {
       final res = await _api.put(
-        ApiConstants.profile,
+        ApiConstants.updateProfile(userId),
         body: {
-          'nama':    nama.trim(),
-          'bio':     bio?.trim(),
-          'telepon': telepon?.trim(),
+          'nama': nama,
+          'bio': bio,
+          'telepon': telepon,
         },
-        withAuth: true,
       );
-      _profile = UserModel.fromJson(res['data'] as Map<String, dynamic>);
-      _isUpdating = false;
-      notifyListeners();
-      return null;
+
+      if (res['success'] == true) {
+        _isUpdating = false;
+        notifyListeners();
+        return null;
+      } else {
+        _isUpdating = false;
+        notifyListeners();
+        return res['message'] ?? 'Gagal memperbarui profil';
+      }
     } on ApiException catch (e) {
       _isUpdating = false;
       notifyListeners();
@@ -66,7 +87,7 @@ class UserService extends ChangeNotifier {
     } catch (_) {
       _isUpdating = false;
       notifyListeners();
-      return 'Gagal memperbarui profil. Periksa koneksi internet.';
+      return 'Gagal terhubung ke server.';
     }
   }
 
@@ -74,6 +95,12 @@ class UserService extends ChangeNotifier {
   void clear() {
     _profile = null;
     _error   = null;
+    _stats = {
+      'viewedCount': 0,
+      'savedCount': 0,
+      'averageRating': 0.0,
+      'reviewCount': 0,
+    };
     notifyListeners();
   }
 

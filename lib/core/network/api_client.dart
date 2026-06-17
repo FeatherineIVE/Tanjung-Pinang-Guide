@@ -144,14 +144,36 @@ class ApiClient {
     return _handleResponse(response);
   }
 
-  // ── DELETE ─────────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>> delete(
+  // ── PATCH ──────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> patch(
     String path, {
+    Map<String, dynamic>? body,
     bool withAuth = true,
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$path');
     final response = await _requestWithRefresh(
-      requestFn: (headers) => _http.delete(uri, headers: headers),
+      requestFn: (headers) => _http.patch(
+        uri,
+        headers: headers,
+        body: body != null ? json.encode(body) : null,
+      ),
+    );
+    return _handleResponse(response);
+  }
+
+  // ── DELETE ─────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    Map<String, dynamic>? body,
+    bool withAuth = true,
+  }) async {
+    final uri = Uri.parse('${ApiConstants.baseUrl}$path');
+    final response = await _requestWithRefresh(
+      requestFn: (headers) => _http.delete(
+        uri, 
+        headers: headers,
+        body: body != null ? json.encode(body) : null,
+      ),
     );
     return _handleResponse(response);
   }

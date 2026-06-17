@@ -65,87 +65,13 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              decoration: const BoxDecoration(gradient: AppColors.headerGradient),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI Itinerary Planner',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Rancang perjalananmu ke Tanjungpinang',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              onPressed: _resetForm,
-                              icon: const Icon(Icons.add, color: Color(0xFF1A9BD7), size: 20),
-                              label: const Text('Buat Baru', style: TextStyle(color: Color(0xFF1A9BD7), fontWeight: FontWeight.w600)),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.white),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AIItineraryHistory())),
-                              icon: const Icon(Icons.history, size: 20),
-                              label: const Text('Riwayat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Form Content
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(top: 1),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(top: 1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
                   // Days Section
                   Row(
                     children: [
@@ -435,10 +361,6 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
                   const SizedBox(height: 24),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

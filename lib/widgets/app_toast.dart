@@ -57,7 +57,9 @@ class AppToast {
 
     // Auto-dismiss
     Future.delayed(Duration(seconds: isError ? 3 : 2), () {
-      entry.remove();
+      if (entry.mounted) {
+        entry.remove();
+      }
       if (_currentOverlay == entry) _currentOverlay = null;
     });
   }

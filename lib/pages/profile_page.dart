@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/auth_screen.dart';
+import 'info_content_page.dart';
 
 /// Halaman Profil untuk user yang BELUM LOGIN (tamu).
 /// Tanpa pengaturan akun — hanya info umum dan tombol masuk/daftar.
@@ -213,22 +214,30 @@ class ProfilePage extends StatelessWidget {
                         _InfoMenuItem(
                             icon: Icons.info_outline_rounded,
                             label: 'Tentang Aplikasi',
-                            onTap: () {}),
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Tentang Aplikasi', content: InfoContentData.tentang)));
+                            }),
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.language_rounded,
                             label: 'Bahasa',
-                            onTap: () {}),
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Bahasa', content: InfoContentData.bahasa)));
+                            }),
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.privacy_tip_outlined,
                             label: 'Kebijakan Privasi',
-                            onTap: () {}),
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Kebijakan Privasi', content: InfoContentData.privasi)));
+                            }),
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.help_outline_rounded,
                             label: 'Bantuan & FAQ',
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Bantuan & FAQ', content: InfoContentData.bantuan)));
+                            },
                             isLast: true),
                       ],
                     ),

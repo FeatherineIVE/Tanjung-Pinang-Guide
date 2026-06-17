@@ -11,7 +11,8 @@ import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/bookmark_service.dart';
+import '../services/favorite_service.dart';
+import '../services/user_service.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -33,7 +34,8 @@ class _MainShellState extends State<MainShell> {
       final auth = context.read<AuthService>();
       _wasLoggedIn = auth.isLoggedIn;
       if (auth.isLoggedIn) {
-        context.read<BookmarkService>().fetchAll();
+        context.read<UserService>().fetchProfileStats(auth.currentUser!.id);
+        context.read<FavoriteService>().fetchFavorites(auth.currentUser!.id);
       }
       // Listen perubahan auth state
       auth.addListener(_onAuthChanged);
@@ -49,11 +51,11 @@ class _MainShellState extends State<MainShell> {
   void _onAuthChanged() {
     final auth = context.read<AuthService>();
     if (auth.isLoggedIn && !_wasLoggedIn) {
-      // Baru login — fetch bookmarks
-      context.read<BookmarkService>().fetchAll();
+      context.read<UserService>().fetchProfileStats(auth.currentUser!.id);
+      context.read<FavoriteService>().fetchFavorites(auth.currentUser!.id);
     } else if (!auth.isLoggedIn && _wasLoggedIn) {
       // Baru logout — clear bookmarks
-      context.read<BookmarkService>().clear();
+      context.read<FavoriteService>().clear();
     }
     _wasLoggedIn = auth.isLoggedIn;
   }
@@ -91,46 +93,6 @@ class _MainShellState extends State<MainShell> {
         currentIndex: _currentIndex,
         isLoggedIn: isLoggedIn,
         onTap: (index) => setState(() => _currentIndex = index),
-      ),
-    );
-  }
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  final String label;
-  const _PlaceholderPage({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.construction_rounded,
-                    size: 40, color: AppColors.primaryBlue),
-              ),
-              const SizedBox(height: 16),
-              Text('Halaman $label',
-                  style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark)),
-              const SizedBox(height: 8),
-              Text('Segera hadir 🚧',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[500])),
-            ],
-          ),
-        ),
       ),
     );
   }

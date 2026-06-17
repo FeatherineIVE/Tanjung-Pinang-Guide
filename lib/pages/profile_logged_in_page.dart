@@ -6,6 +6,8 @@ import '../screens/auth_screen.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/custom_text_field.dart';
 import '../utils/app_colors.dart';
+import 'info_content_page.dart';
+import 'notification_page.dart';
 
 /// Halaman Profil untuk user yang SUDAH LOGIN.
 /// Menampilkan data user, pengaturan akun, aktivitas, dan info umum.
@@ -131,6 +133,40 @@ class ProfileLoggedInPage extends StatelessWidget {
             ),
           ),
 
+          // ── Statistik Aktivitas ────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Statistik Aktivitas',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A2A3A)),
+                  ),
+                  const SizedBox(height: 10),
+                  Consumer<UserService>(
+                    builder: (context, userService, _) {
+                      final stats = userService.stats;
+                      return Row(
+                        children: [
+                          Expanded(child: _StatCard(icon: Icons.remove_red_eye_rounded, value: stats['viewedCount'].toString(), label: 'Dilihat')),
+                          const SizedBox(width: 12),
+                          Expanded(child: _StatCard(icon: Icons.favorite_rounded, value: stats['savedCount'].toString(), label: 'Disimpan')),
+                          const SizedBox(width: 12),
+                          Expanded(child: _StatCard(icon: Icons.star_rounded, value: stats['reviewCount'].toString(), label: 'Ulasan')),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // ── Pengaturan Akun ────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -176,7 +212,9 @@ class ProfileLoggedInPage extends StatelessWidget {
                         _InfoMenuItem(
                             icon: Icons.notifications_none_rounded,
                             label: 'Notifikasi',
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPage()));
+                            },
                             isLast: true),
                       ],
                     ),
@@ -217,22 +255,30 @@ class ProfileLoggedInPage extends StatelessWidget {
                         _InfoMenuItem(
                             icon: Icons.info_outline_rounded,
                             label: 'Tentang Aplikasi',
-                            onTap: () {}),
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Tentang Aplikasi', content: InfoContentData.tentang)));
+                            }),
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.language_rounded,
                             label: 'Bahasa',
-                            onTap: () {}),
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Bahasa', content: InfoContentData.bahasa)));
+                            }),
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.privacy_tip_outlined,
                             label: 'Kebijakan Privasi',
-                            onTap: () {}),
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Kebijakan Privasi', content: InfoContentData.privasi)));
+                            }),
                         const Divider(height: 1, indent: 56),
                         _InfoMenuItem(
                             icon: Icons.help_outline_rounded,
                             label: 'Bantuan & FAQ',
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoContentPage(title: 'Bantuan & FAQ', content: InfoContentData.bantuan)));
+                            },
                             isLast: true),
                       ],
                     ),
@@ -400,6 +446,7 @@ class ProfileLoggedInPage extends StatelessWidget {
                           onPressed: () async {
                             final userSvc = ctx.read<UserService>();
                             final error = await userSvc.updateProfile(
+                              userId:  user.id,
                               nama:    namaCtrl.text,
                               bio:     bioCtrl.text,
                               telepon: teleponCtrl.text,
@@ -408,10 +455,12 @@ class ProfileLoggedInPage extends StatelessWidget {
                             if (error != null) {
                               AppToast.error(ctx, error);
                             } else {
-                              // Sync updated name ke AuthService local state
-                              if (userSvc.profile != null) {
-                                auth.updateLocalUser(userSvc.profile!);
-                              }
+                              // Sync updated data ke AuthService local state
+                              auth.updateLocalUser(user.copyWith(
+                                nama: namaCtrl.text,
+                                bio: bioCtrl.text,
+                                telepon: teleponCtrl.text,
+                              ));
                               Navigator.pop(sheetCtx);
                               AppToast.success(ctx, 'Profil berhasil diperbarui ✅');
                             }
@@ -487,6 +536,40 @@ class _InfoMenuItem extends StatelessWidget {
             color: Colors.grey, size: 20),
         onTap: onTap,
         dense: true,
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _StatCard({required this.icon, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: const Color(0xFF00AEEF), size: 24),
+          const SizedBox(height: 8),
+          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A2A3A))),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+        ],
       ),
     );
   }

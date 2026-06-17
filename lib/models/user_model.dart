@@ -6,6 +6,9 @@ class UserModel {
   final String email;
   final String? telepon;
   final String? bio;
+  final String? role;
+  final String? status;
+  final String? avatarUrl;
   final String? createdAt;
   /// True jika user login via Google (tidak punya password lokal)
   final bool isGoogleUser;
@@ -16,6 +19,9 @@ class UserModel {
     required this.email,
     this.telepon,
     this.bio,
+    this.role,
+    this.status,
+    this.avatarUrl,
     this.createdAt,
     this.isGoogleUser = false,
   });
@@ -27,6 +33,9 @@ class UserModel {
       email:     json['email'] as String,
       telepon:   json['telepon'] as String?,
       bio:       json['bio'] as String?,
+      role:      json['role'] as String?,
+      status:    json['status'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       createdAt: json['created_at'] as String?,
     );
   }
@@ -37,6 +46,9 @@ class UserModel {
         'email':      email,
         'telepon':    telepon,
         'bio':        bio,
+        'role':       role,
+        'status':     status,
+        'avatar_url': avatarUrl,
         'created_at': createdAt,
       };
 

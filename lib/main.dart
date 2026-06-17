@@ -7,10 +7,11 @@ import 'utils/app_colors.dart';
 // ── Services ──────────────────────────────────────────────────────────────────
 import 'services/auth_service.dart';
 import 'services/destination_service.dart';
-import 'services/bookmark_service.dart';
-import 'services/rating_service.dart';
 import 'services/user_service.dart';
-import 'services/chat_service.dart';
+import 'services/favorite_service.dart';
+import 'services/review_service.dart';
+import 'services/itinerary_service.dart';
+import 'services/ai_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,10 +32,11 @@ class MyApp extends StatelessWidget {
 
         // Data services
         ChangeNotifierProvider(create: (_) => DestinationService()),
-        ChangeNotifierProvider(create: (_) => BookmarkService()),
-        ChangeNotifierProvider(create: (_) => RatingService()),
         ChangeNotifierProvider(create: (_) => UserService()),
-        ChangeNotifierProvider(create: (_) => ChatService()),
+        ChangeNotifierProvider(create: (_) => FavoriteService()),
+        ChangeNotifierProvider(create: (_) => ReviewService()),
+        ChangeNotifierProvider(create: (_) => ItineraryService()),
+        ChangeNotifierProvider(create: (_) => AiService()),
       ],
       child: MaterialApp(
         title: 'Tanjung Pinang Guide',

@@ -57,6 +57,15 @@ class DestinationService extends ChangeNotifier {
     }
   }
 
+  // ── Increment Visit ───────────────────────────────────────────────────────
+  Future<void> incrementVisit(int id) async {
+    try {
+      await _api.patch(ApiConstants.destinationVisit(id));
+    } catch (_) {
+      // Abaikan jika gagal increment
+    }
+  }
+
   // ── Get By Slug ───────────────────────────────────────────────────────────
   Future<DestinationModel?> getBySlug(String slug) async {
     try {

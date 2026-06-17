@@ -4,7 +4,6 @@ import '../utils/app_colors.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/app_toast.dart';
 import '../services/auth_service.dart';
-import '../services/google_auth_service.dart';
 import '../shell/main_shell.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -58,10 +57,6 @@ class _AuthScreenState extends State<AuthScreen>
   // ── Lupa Password Sheet ────────────────────────────────────────────────
   void _showForgotPasswordSheet(BuildContext ctx) {
     final emailCtrl = TextEditingController();
-    final newPassCtrl = TextEditingController();
-    final confirmPassCtrl = TextEditingController();
-    bool obscureNew = true;
-    bool obscureConfirm = true;
     bool isLoading = false;
 
     showModalBottomSheet(
@@ -125,33 +120,7 @@ class _AuthScreenState extends State<AuthScreen>
                       prefixIcon: Icons.email_outlined,
                       controller: emailCtrl,
                     ),
-                    const SizedBox(height: 16),
 
-                    // Password baru
-                    CustomTextField(
-                      label: 'Password Baru',
-                      hintText: 'Minimal 6 karakter',
-                      prefixIcon: Icons.lock_outline,
-                      isPassword: true,
-                      obscureText: obscureNew,
-                      onTogglePassword: () =>
-                          setSheetState(() => obscureNew = !obscureNew),
-                      controller: newPassCtrl,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Konfirmasi password
-                    CustomTextField(
-                      label: 'Konfirmasi Password',
-                      hintText: 'Ulangi password baru',
-                      prefixIcon: Icons.lock_outline,
-                      isPassword: true,
-                      obscureText: obscureConfirm,
-                      onTogglePassword: () =>
-                          setSheetState(() => obscureConfirm = !obscureConfirm),
-                      controller: confirmPassCtrl,
-                    ),
-                    const SizedBox(height: 24),
 
                     // Tombol Reset
                     SizedBox(
@@ -167,13 +136,18 @@ class _AuthScreenState extends State<AuthScreen>
                               ? null
                               : () async {
                                   setSheetState(() => isLoading = true);
-                                  // Reset password tidak tersedia via API saat ini
-                                  // Tampilkan pesan informatif
+                                  setSheetState(() => isLoading = true);
+                                  final auth = context.read<AuthService>();
+                                  final error = await auth.forgotPassword(emailCtrl.text);
                                   setSheetState(() => isLoading = false);
+                                  
                                   if (ctx.mounted) {
-                                    Navigator.pop(context);
-                                    AppToast.info(ctx,
-                                        'Silakan hubungi admin untuk reset password');
+                                    if (error != null) {
+                                      AppToast.error(ctx, error);
+                                    } else {
+                                      Navigator.pop(context);
+                                      AppToast.success(ctx, 'Link reset password telah dikirim ke email Anda.');
+                                    }
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
@@ -226,13 +200,7 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 
-  // ── Simulasi loading ──────────────────────────────────────────────────
-  Future<void> _simulateLoading(Future<void> Function() action) async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800)); // simulasi network
-    await action();
-    if (mounted) setState(() => _isLoading = false);
-  }
+
 
   // ── Handle Login ──────────────────────────────────────────────────────
   void _handleLogin() async {
@@ -248,6 +216,25 @@ class _AuthScreenState extends State<AuthScreen>
       AppToast.error(context, error);
     } else {
       AppToast.success(context, 'Selamat datang, ${auth.userName}! 👋');
+      await Future.delayed(const Duration(milliseconds: 600));
+      _goToMain();
+    }
+  }
+
+  // ── Handle Google Login ───────────────────────────────────────────────
+  void _handleGoogleLogin({required bool isRegister}) async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AuthService>();
+    final error = await auth.loginWithGoogle(isRegister: isRegister);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    
+    if (error != null) {
+      if (error != 'Login Google dibatalkan') {
+        AppToast.error(context, error);
+      }
+    } else {
+      AppToast.success(context, isRegister ? 'Pendaftaran dengan Google berhasil! 🎉' : 'Selamat datang, ${auth.userName}! 👋');
       await Future.delayed(const Duration(milliseconds: 600));
       _goToMain();
     }
@@ -287,27 +274,6 @@ class _AuthScreenState extends State<AuthScreen>
     Future.delayed(const Duration(milliseconds: 500), _goToMain);
   }
 
-  // ── Handle Google Sign-In ──────────────────────────────────────────
-  void _handleGoogle() async {
-    setState(() => _isLoading = true);
-    final result = await GoogleAuthService.signIn();
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (!result.isSuccess) {
-      AppToast.error(context, result.errorMessage ?? 'Login Google gagal');
-      return;
-    }
-
-    // Update AuthService state dengan token yang sudah disimpan GoogleAuthService
-    final auth = context.read<AuthService>();
-    await auth.restoreFromStorage();
-    if (!mounted) return;
-
-    AppToast.success(context, 'Selamat datang, ${result.user!.nama}! 👋');
-    await Future.delayed(const Duration(milliseconds: 600));
-    _goToMain();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -520,7 +486,7 @@ class _AuthScreenState extends State<AuthScreen>
           const SizedBox(height: 24),
           _buildDivider(),
           const SizedBox(height: 20),
-          _buildGoogleButton(),
+          _buildGoogleButton(isRegister: false),
           const SizedBox(height: 12),
           _buildGuestButton(),
           const SizedBox(height: 40),
@@ -574,7 +540,7 @@ class _AuthScreenState extends State<AuthScreen>
           const SizedBox(height: 24),
           _buildDivider(),
           const SizedBox(height: 20),
-          _buildGoogleButton(),
+          _buildGoogleButton(isRegister: true),
           const SizedBox(height: 12),
           _buildGuestButton(),
           const SizedBox(height: 40),
@@ -624,7 +590,7 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 
-  Widget _buildGoogleButton() {
+  Widget _buildGoogleButton({required bool isRegister}) {
     return Container(
       width: double.infinity,
       height: 56,
@@ -634,25 +600,17 @@ class _AuthScreenState extends State<AuthScreen>
         border: Border.all(color: AppColors.greyBorder, width: 1),
       ),
       child: TextButton(
-        onPressed: _isLoading ? null : _handleGoogle,
+        onPressed: _isLoading ? null : () => _handleGoogleLogin(isRegister: isRegister),
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 24, height: 24,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage('https://www.google.com/favicon.ico'),
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
+            Image.asset('assets/images/google_logo.png', height: 24, errorBuilder: (c, e, s) => const Icon(Icons.g_mobiledata, color: Colors.red, size: 32)),
             const SizedBox(width: 12),
-            const Text('Lanjutkan dengan Google',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textDark)),
+            Text(isRegister ? 'Daftar dengan Google' : 'Masuk dengan Google',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textDark)),
           ],
         ),
       ),
