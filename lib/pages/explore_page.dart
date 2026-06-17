@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../widgets/destination_image.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
 import '../services/destination_service.dart';
 import '../models/destination_model.dart';
 import 'explore_detail_page.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ExplorePage extends StatefulWidget {
   final DestinationCategory initialCategory;
@@ -21,14 +23,13 @@ class ExplorePage extends StatefulWidget {
 class _ExplorePageState extends State<ExplorePage> {
   late DestinationCategory _selectedCategory;
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>('');
 
   @override
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory;
-    _searchController.addListener(
-        () => setState(() => _searchQuery = _searchController.text.toLowerCase()));
+
     // Fetch dari backend jika belum ada data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final svc = context.read<DestinationService>();
@@ -50,19 +51,16 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchQueryNotifier.dispose();
     super.dispose();
   }
 
-
-  List<DestinationModel> _filteredApi(List<DestinationModel> all) {
+  List<DestinationModel> _filteredApi(List<DestinationModel> all, String query) {
     return all.where((d) {
       // Cocokkan kategori: frontend pakai 'pantai', backend pakai 'Wisata Pantai'
       final matchCat = _selectedCategory == DestinationCategory.semua ||
           d.kategori.toLowerCase().contains(_selectedCategory.label.toLowerCase());
-      final matchSearch = _searchQuery.isEmpty ||
-          d.nama.toLowerCase().contains(_searchQuery) ||
-          (d.deskripsi?.toLowerCase().contains(_searchQuery) ?? false) ||
-          (d.lokasi?.toLowerCase().contains(_searchQuery) ?? false);
+      final matchSearch = query.isEmpty || d.nama.toLowerCase().contains(query);
       return matchCat && matchSearch;
     }).toList();
   }
@@ -70,9 +68,6 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   Widget build(BuildContext context) {
     final svc = context.watch<DestinationService>();
-    // Selalu pakai data API — tidak ada fallback ke dummy
-    final apiResults = _filteredApi(svc.destinations);
-    final totalResults = apiResults.length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -156,6 +151,8 @@ class _ExplorePageState extends State<ExplorePage> {
                           Expanded(
                             child: TextField(
                               controller: _searchController,
+                              textInputAction: TextInputAction.search,
+                              onChanged: (value) => _searchQueryNotifier.value = value.toLowerCase(),
                               decoration: const InputDecoration(
                                 hintText: 'Cari destinasi...',
                                 hintStyle: TextStyle(
@@ -166,18 +163,23 @@ class _ExplorePageState extends State<ExplorePage> {
                               ),
                             ),
                           ),
-                          if (_searchQuery.isNotEmpty)
-                            GestureDetector(
-                              onTap: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Icon(Icons.close_rounded,
-                                    color: AppColors.grey, size: 18),
-                              ),
-                            ),
+                          ValueListenableBuilder<String>(
+                            valueListenable: _searchQueryNotifier,
+                            builder: (context, query, child) {
+                              if (query.isEmpty) return const SizedBox.shrink();
+                              return GestureDetector(
+                                onTap: () {
+                                  _searchController.clear();
+                                  _searchQueryNotifier.value = '';
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 10),
+                                  child: Icon(Icons.close_rounded,
+                                      color: AppColors.grey, size: 18),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -258,88 +260,156 @@ class _ExplorePageState extends State<ExplorePage> {
           // Divider tipis
           Container(height: 1, color: AppColors.greyBorder),
 
-          // ── Jumlah hasil ─────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Row(
-              children: [
-                Text('$totalResults destinasi ditemukan',
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textGrey,
-                        fontWeight: FontWeight.w500)),
-                if (svc.isLoading) ...[
-                  const SizedBox(width: 10),
-                  const SizedBox(
-                    width: 14, height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primaryBlue,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // ── List Destinasi (scrollable) ───────────────────────────────────
           Expanded(
-            child: svc.isLoading && svc.destinations.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 12),
-                        Text('Memuat destinasi...'),
-                      ],
-                    ),
-                  )
-                : (totalResults == 0 && !svc.isLoading)
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryBlue.withOpacity(0.08),
-                                shape: BoxShape.circle,
+            child: ValueListenableBuilder<String>(
+              valueListenable: _searchQueryNotifier,
+              builder: (context, query, child) {
+                final apiResults = _filteredApi(svc.destinations, query);
+                final totalResults = apiResults.length;
+
+                return Column(
+                  children: [
+                    // ── Jumlah hasil ─────────────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      child: Row(
+                        children: [
+                          Text('$totalResults destinasi ditemukan',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textGrey,
+                                  fontWeight: FontWeight.w500)),
+                          if (svc.isLoading) ...[
+                            const SizedBox(width: 10),
+                            const SizedBox(
+                              width: 14, height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primaryBlue,
                               ),
-                              child: const Icon(Icons.search_off_rounded,
-                                  size: 40, color: AppColors.primaryBlue),
                             ),
-                            const SizedBox(height: 16),
-                            const Text('Destinasi tidak ditemukan',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textDark)),
-                            const SizedBox(height: 6),
-                            Text('Coba kata kunci lain',
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.grey[500])),
                           ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        itemCount: apiResults.length,
-                        itemBuilder: (context, index) {
-                          final dest = apiResults[index];
-                          return _DestinationListCardApi(
-                            destination: dest,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    ExploreDetailPage(destinationModel: dest),
-                              ),
-                            ),
-                          );
-                        },
+                        ],
                       ),
+                    ),
+
+                    // ── List Destinasi (scrollable) ───────────────────────────────────
+                    Expanded(
+                      child: svc.isLoading && svc.destinations.isEmpty
+                          ? ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              itemCount: 5,
+                              itemBuilder: (context, index) {
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Shimmer.fromColors(
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[100]!,
+                                        child: Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 8),
+                                            Shimmer.fromColors(
+                                              baseColor: Colors.grey[300]!,
+                                              highlightColor: Colors.grey[100]!,
+                                              child: Container(
+                                                width: double.infinity,
+                                                height: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Shimmer.fromColors(
+                                              baseColor: Colors.grey[300]!,
+                                              highlightColor: Colors.grey[100]!,
+                                              child: Container(
+                                                width: 120,
+                                                height: 12,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Shimmer.fromColors(
+                                              baseColor: Colors.grey[300]!,
+                                              highlightColor: Colors.grey[100]!,
+                                              child: Container(
+                                                width: 80,
+                                                height: 12,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                );
+                              },
+                            )
+                          : (totalResults == 0 && !svc.isLoading)
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryBlue.withOpacity(0.08),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.search_off_rounded,
+                                            size: 40, color: AppColors.primaryBlue),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text('Destinasi tidak ditemukan',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textDark)),
+                                      const SizedBox(height: 6),
+                                      Text('Coba kata kunci lain',
+                                          style: TextStyle(
+                                              fontSize: 13, color: Colors.grey[500])),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                                  itemCount: apiResults.length,
+                                  itemBuilder: (context, index) {
+                                    final dest = apiResults[index];
+                                    return _DestinationListCardApi(
+                                      destination: dest,
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              ExploreDetailPage(destinationModel: dest),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
         ), // Column
@@ -380,9 +450,11 @@ class _DestinationListCardApi extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.asset(
-                    dest.displayImagePath,
-                    height: 170, width: double.infinity, fit: BoxFit.cover,
+                  child: DestinationImage(
+                    imagePath: dest.displayImagePath,
+                    height: 170,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       height: 170,
                       color: dest.categoryColor.withOpacity(0.15),

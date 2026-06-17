@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../widgets/destination_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
 import '../models/destination_model.dart';
 import '../services/auth_service.dart';
-import '../services/chat_service.dart';
 import '../services/destination_service.dart';
 import 'explore_detail_page.dart';
 
@@ -37,6 +38,10 @@ class _HomeLoggedInPageState extends State<HomeLoggedInPage> {
     final allDests = destSvc.destinations;
     final popularDestinations = allDests.isNotEmpty
         ? allDests.take(3).toList()
+        : <DestinationModel>[];
+        
+    final recommendedDestinations = allDests.length > 3
+        ? allDests.skip(3).take(5).toList()
         : <DestinationModel>[];
 
     return Scaffold(
@@ -253,9 +258,26 @@ class _HomeLoggedInPageState extends State<HomeLoggedInPage> {
                   ),
                   const SizedBox(height: 12),
                   if (destSvc.isLoading)
-                    const SizedBox(
+                    SizedBox(
                       height: 210,
-                      child: Center(child: CircularProgressIndicator()),
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 3,
+                        itemBuilder: (context, index) {
+                          return Shimmer.fromColors(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor: Colors.grey.shade100,
+                            child: Container(
+                              width: 165,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     )
                   else if (popularDestinations.isEmpty)
                     const SizedBox(
@@ -279,7 +301,6 @@ class _HomeLoggedInPageState extends State<HomeLoggedInPage> {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                // Langsung pass destinationModel — tidak perlu resolve!
                                 builder: (_) => ExploreDetailPage(destinationModel: dest),
                               ),
                             ),
@@ -290,6 +311,64 @@ class _HomeLoggedInPageState extends State<HomeLoggedInPage> {
                 ],
               ),
             ),
+
+            // ── Rekomendasi ──────────────────────────────────────────
+            if (destSvc.isLoading || recommendedDestinations.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                child: Column(
+                  children: [
+                    _SectionHeader(
+                      title: 'Rekomendasi Untukmu',
+                      onSeeAll: () => widget.onCategoryTap(DestinationCategory.semua),
+                    ),
+                    const SizedBox(height: 12),
+                    if (destSvc.isLoading)
+                      SizedBox(
+                        height: 210,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: 3,
+                          itemBuilder: (context, index) {
+                            return Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: 165,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 210,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          clipBehavior: Clip.none,
+                          itemCount: recommendedDestinations.length,
+                          itemBuilder: (context, index) {
+                            final dest = recommendedDestinations[index];
+                            return _DestinationModelCard(
+                              destination: dest,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ExploreDetailPage(destinationModel: dest),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
 
             const SizedBox(height: 16),
           ],
@@ -342,65 +421,14 @@ class _CategoryItem extends StatelessWidget {
   }
 }
 
-class _SuggestChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
 
-  const _SuggestChip({required this.label, required this.onTap});
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: AppColors.primaryBlue.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: AppColors.primaryBlue.withOpacity(0.3), width: 1),
-        ),
-        child: Text(label,
-            style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.primaryBlue,
-                fontWeight: FontWeight.w500)),
-      ),
-    );
-  }
-}
-
-// ── AI Chat Card ──────────────────────────────────────────────────────────────
-class _AiChatCard extends StatefulWidget {
+// ── AI Itinerary Promo Card ────────────────────────────────────────────────
+class _AiChatCard extends StatelessWidget {
   const _AiChatCard();
-  @override
-  State<_AiChatCard> createState() => _AiChatCardState();
-}
-
-class _AiChatCardState extends State<_AiChatCard> {
-  final _ctrl = TextEditingController();
-  String? _lastQuestion;
-  String? _lastReply;
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _send(BuildContext ctx, {String? preset}) async {
-    final msg = preset ?? _ctrl.text.trim();
-    if (msg.isEmpty) return;
-    setState(() { _lastQuestion = msg; _lastReply = null; });
-    _ctrl.clear();
-    final reply = await ctx.read<ChatService>().sendMessage(msg);
-    if (!mounted) return;
-    setState(() => _lastReply = reply ?? 'Maaf, tidak dapat menjawab saat ini.');
-  }
 
   @override
   Widget build(BuildContext context) {
-    final chatSvc = context.watch<ChatService>();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -409,98 +437,37 @@ class _AiChatCardState extends State<_AiChatCard> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(children: [
-            Container(
-              width: 38, height: 38,
-              decoration: BoxDecoration(color: AppColors.primaryBlue.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.smart_toy_rounded, color: AppColors.primaryBlue, size: 20),
-            ),
-            const SizedBox(width: 10),
-            const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('AI Guide', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-              Text('Tanya apa saja tentang Tanjung Pinang', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
-            ]),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(color: const Color(0xFF66BB6A).withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
-              child: const Text('● Online', style: TextStyle(fontSize: 11, color: Color(0xFF66BB6A), fontWeight: FontWeight.w600)),
-            ),
-          ]),
-          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppColors.primaryBlue.withOpacity(0.06), borderRadius: BorderRadius.circular(12)),
-            child: chatSvc.isLoading
-                ? const Row(children: [
-                    SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlue)),
-                    SizedBox(width: 10),
-                    Text('AI Guide sedang mengetik...', style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
-                  ])
-                : Text(
-                    _lastReply ?? '👋 Halo! Saya AI Guide kamu. Mau tanya soal destinasi wisata, kuliner, atau transportasi di Tanjung Pinang?',
-                    style: const TextStyle(fontSize: 13, color: AppColors.textDark, height: 1.4),
-                  ),
-          ),
-          if (_lastQuestion != null) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: AppColors.primaryBlue, borderRadius: BorderRadius.circular(12)),
-                child: Text(_lastQuestion!, style: const TextStyle(fontSize: 13, color: Colors.white)),
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          if (_lastQuestion == null)
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              _SuggestChip(label: '🏖️ Pantai terbaik?', onTap: () => _send(context, preset: 'Pantai terbaik di Tanjung Pinang?')),
-              _SuggestChip(label: '🍜 Kuliner wajib coba?', onTap: () => _send(context, preset: 'Kuliner wajib coba di Tanjung Pinang?')),
-              _SuggestChip(label: '🚢 Cara ke Penyengat?', onTap: () => _send(context, preset: 'Bagaimana cara ke Pulau Penyengat?')),
-            ]),
-          const SizedBox(height: 12),
-          Container(
+            width: 48, height: 48,
             decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.greyBorder, width: 1),
+              color: AppColors.primaryBlue.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Row(children: [
-              Expanded(
-                child: TextField(
-                  controller: _ctrl,
-                  enabled: !chatSvc.isLoading,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _send(context),
-                  decoration: const InputDecoration(
-                    hintText: 'Ketik pertanyaan...',
-                    hintStyle: TextStyle(fontSize: 13, color: AppColors.textHint),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.only(right: 6),
-                width: 36, height: 36,
-                decoration: BoxDecoration(
-                  gradient: chatSvc.isLoading
-                      ? LinearGradient(colors: [Colors.grey.shade300, Colors.grey.shade300])
-                      : AppColors.buttonGradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: IconButton(
-                  onPressed: chatSvc.isLoading ? null : () => _send(context),
-                  icon: const Icon(Icons.send_rounded, color: Colors.white, size: 16),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            ]),
+            child: const Icon(Icons.auto_awesome_rounded, color: AppColors.primaryBlue, size: 24),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('AI Itinerary Generator',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                SizedBox(height: 2),
+                Text('Buat rencana wisata otomatis dengan AI',
+                    style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: AppColors.buttonGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text('Coba',
+                style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -567,8 +534,8 @@ class _DestinationModelCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.asset(
-                dest.displayImagePath,
+              child: DestinationImage(
+                imagePath: dest.displayImagePath,
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../widgets/destination_image.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
 import '../services/auth_service.dart';
-import '../services/bookmark_service.dart';
+import '../services/favorite_service.dart';
 import '../models/destination_model.dart';
 import '../screens/auth_screen.dart';
 import 'explore_detail_page.dart';
@@ -22,7 +23,7 @@ class _FavoritePageState extends State<FavoritePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthService>();
       if (auth.isLoggedIn) {
-        context.read<BookmarkService>().fetchAll();
+        context.read<FavoriteService>().fetchFavorites(auth.currentUser!.id);
       }
     });
   }
@@ -30,7 +31,7 @@ class _FavoritePageState extends State<FavoritePage> {
   @override
   Widget build(BuildContext context) {
     final auth  = context.watch<AuthService>();
-    final bm    = context.watch<BookmarkService>();
+    final bm    = context.watch<FavoriteService>();
 
     // ── Belum login ───────────────────────────────────────────────────────
     if (!auth.isLoggedIn && !auth.isGuest) {
@@ -41,12 +42,12 @@ class _FavoritePageState extends State<FavoritePage> {
       return _GuestView();
     }
 
-    final favorites = bm.bookmarks;
+    final favorites = bm.favorites;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: RefreshIndicator(
-        onRefresh: () => bm.fetchAll(),
+        onRefresh: () => bm.fetchFavorites(auth.currentUser!.id),
         color: AppColors.primaryBlue,
         child: CustomScrollView(
           slivers: [
@@ -125,7 +126,7 @@ class _FavoritePageState extends State<FavoritePage> {
                       return _FavoriteCard(
                         destination: dest,
                         onRemove: () async {
-                          final success = await bm.remove(dest.id);
+                          final success = await bm.removeFavorite(auth.currentUser!.id, dest.id);
                           if (success && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -229,8 +230,8 @@ class _FavoriteCard extends StatelessWidget {
                   width: double.infinity,
                   height: 180,
                   color: destination.categoryColor,
-                  child: Image.asset(
-                    destination.displayImagePath,
+                  child: DestinationImage(
+                    imagePath: destination.displayImagePath,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: destination.categoryColor.withOpacity(0.3),

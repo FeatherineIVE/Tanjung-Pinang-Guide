@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../widgets/destination_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../utils/app_colors.dart';
 import '../data/destination_data.dart';
 import '../models/destination_model.dart';
@@ -42,6 +44,10 @@ class _HomePageState extends State<HomePage> {
     final allDests = destSvc.destinations;
     final popularDestinations = allDests.isNotEmpty
         ? allDests.take(3).toList()
+        : <DestinationModel>[];
+        
+    final recommendedDestinations = allDests.length > 3
+        ? allDests.skip(3).take(5).toList()
         : <DestinationModel>[];
 
     return Scaffold(
@@ -475,9 +481,26 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 12),
                   if (destSvc.isLoading)
-                    const SizedBox(
+                    SizedBox(
                       height: 210,
-                      child: Center(child: CircularProgressIndicator()),
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 3,
+                        itemBuilder: (context, index) {
+                          return Shimmer.fromColors(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor: Colors.grey.shade100,
+                            child: Container(
+                              width: 165,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     )
                   else if (popularDestinations.isEmpty)
                     const SizedBox(
@@ -501,7 +524,6 @@ class _HomePageState extends State<HomePage> {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                // Langsung pakai destinationModel → favorite langsung bekerja
                                 builder: (_) => ExploreDetailPage(destinationModel: dest),
                               ),
                             ),
@@ -512,6 +534,64 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+
+            // ── Rekomendasi ──────────────────────────────────────────
+            if (destSvc.isLoading || recommendedDestinations.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                child: Column(
+                  children: [
+                    _SectionHeader(
+                      title: 'Rekomendasi Untukmu',
+                      onSeeAll: () => widget.onCategoryTap(DestinationCategory.semua),
+                    ),
+                    const SizedBox(height: 12),
+                    if (destSvc.isLoading)
+                      SizedBox(
+                        height: 210,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: 3,
+                          itemBuilder: (context, index) {
+                            return Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: 165,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 210,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          clipBehavior: Clip.none,
+                          itemCount: recommendedDestinations.length,
+                          itemBuilder: (context, index) {
+                            final dest = recommendedDestinations[index];
+                            return _DestinationModelCard(
+                              destination: dest,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ExploreDetailPage(destinationModel: dest),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
 
             const SizedBox(height: 16),
           ],
@@ -652,8 +732,8 @@ class _DestinationModelCard extends StatelessWidget {
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.asset(
-                'assets/images/onboarding1.jpg',
+              child: DestinationImage(
+                imagePath: dest.displayImagePath,
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,

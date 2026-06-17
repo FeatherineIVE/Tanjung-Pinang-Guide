@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import '../widgets/destination_image.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shimmer/shimmer.dart';
 import '../utils/app_colors.dart';
+import '../services/ai_service.dart';
 import '../data/destination_data.dart';
 import '../services/auth_service.dart';
-import '../services/bookmark_service.dart';
+import '../services/favorite_service.dart';
 import '../services/destination_service.dart';
-import '../services/rating_service.dart';
+import '../services/review_service.dart';
 import '../models/destination_model.dart';
-import '../models/rating_model.dart';
+import '../models/review_model.dart';
 import '../widgets/login_required_sheet.dart';
 
 class ExploreDetailPage extends StatefulWidget {
@@ -48,8 +51,8 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
         // Sudah ada model dari backend — gunakan langsung
         _resolvedModel = widget.destinationModel;
         debugPrint('[FAV-DEBUG] Langsung pakai destinationModel id=${widget.destinationModel!.id}');
-        // Fetch ratings
-        context.read<RatingService>().fetchByDestination(widget.destinationModel!.id);
+        // Fetch reviews
+        context.read<ReviewService>().fetchReviews(widget.destinationModel!.id);
       } else if (widget.destination != null) {
         // Data dari dummy lokal — resolve ke backend
         debugPrint('[FAV-DEBUG] Resolve dari dummy: title=${widget.destination!.title}');
@@ -94,7 +97,7 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
     if (found != null && mounted) {
       debugPrint('[FAV-DEBUG] BERHASIL resolve: id=${found.id} nama=${found.nama}');
       setState(() => _resolvedModel = found);
-      context.read<RatingService>().fetchByDestination(found.id);
+      context.read<ReviewService>().fetchReviews(found.id);
     } else {
       debugPrint('[FAV-DEBUG] GAGAL resolve semua strategi untuk title="$title"');
     }
@@ -140,14 +143,31 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
   Color get _bgColor => widget.destinationModel?.categoryColor ?? widget.destination?.bgColor ?? AppColors.primaryBlue;
   double? get _mapsLat => widget.destinationModel?.mapsLat ?? widget.destination?.mapsLat;
   double? get _mapsLng => widget.destinationModel?.mapsLng ?? widget.destination?.mapsLng;
+  String? get _mapsUrl => widget.destinationModel?.mapsUrl;
 
   Future<void> _openMaps() async {
+    final mapsUrl = _mapsUrl;
+    if (mapsUrl != null && mapsUrl.isNotEmpty) {
+      final uri = Uri.parse(mapsUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    }
+
     final lat   = _mapsLat;
     final lng   = _mapsLng;
-    if (lat == null || lng == null) return;
-    final label = Uri.encodeComponent(_title);
-    final uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng($label)');
+    if (lat == null || lng == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Koordinat lokasi belum tersedia.')),
+        );
+      }
+      return;
+    }
+    
+    // Format URI standar untuk memulai navigasi langsung (turn-by-turn)
+    final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&dir_action=navigate');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -156,13 +176,13 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
-    final bm   = context.watch<BookmarkService>();
+    final bm   = context.watch<FavoriteService>();
 
     // Model aktif: widget.destinationModel (dari luar) atau _resolvedModel (dari fetch)
     final activeModel = widget.destinationModel ?? _resolvedModel;
     // Tentukan status bookmark berdasarkan model aktif
     final destId = activeModel?.id;
-    final isFav  = destId != null ? bm.isBookmarked(destId) : false;
+    final isFav  = destId != null ? bm.favorites.any((d) => d.id == destId) : false;
 
     void handleFavoritePress() {
       debugPrint('[FAV-DEBUG] handleFavoritePress: isLoggedIn=${auth.isLoggedIn}, activeModel=${activeModel?.nama ?? "NULL"}, widgetModel=${widget.destinationModel?.nama ?? "NULL"}, resolvedModel=${_resolvedModel?.nama ?? "NULL"}');
@@ -172,7 +192,12 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
       }
       if (activeModel != null) {
         // Punya model backend — bisa bookmark
-        bm.toggle(activeModel);
+        final userId = auth.currentUser!.id;
+        if (isFav) {
+          bm.removeFavorite(userId, activeModel.id);
+        } else {
+          bm.addFavorite(userId, activeModel);
+        }
       } else {
         // Belum resolve ke backend (tidak ditemukan / offline)
         ScaffoldMessenger.of(context).showSnackBar(
@@ -208,21 +233,7 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
                   ),
                 ),
                 actions: [
-                  // Favorit Button
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.black26,
-                      child: IconButton(
-                        icon: Icon(
-                          isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          color: isFav ? Colors.red : Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: handleFavoritePress,
-                      ),
-                    ),
-                  ),
+
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
                     child: CircleAvatar(
@@ -239,8 +250,8 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
-                        _imagePath,
+                      DestinationImage(
+                        imagePath: _imagePath,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: _bgColor.withOpacity(0.3),
@@ -367,7 +378,7 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
                   tags: widget.destination?.tags ?? [],
                 ),
                 _TipsTab(tips: widget.destination?.tips ?? []),
-                _SekitarTab(nearby: widget.destination?.nearby ?? []),
+                _SekitarTab(placeName: _title),
                 _UlasanTab(
                   destinationId: (widget.destinationModel ?? _resolvedModel)?.id,
                 ),
@@ -577,26 +588,98 @@ class _TipsTab extends StatelessWidget {
 }
 
 // ── Tab: Sekitar ──────────────────────────────────────────────────────────────
-class _SekitarTab extends StatelessWidget {
-  final DestinationData? dest;
-  final List<NearbyDestination> nearby;
-  const _SekitarTab({this.dest, this.nearby = const []});
+class _SekitarTab extends StatefulWidget {
+  final String placeName;
+
+  const _SekitarTab({required this.placeName});
+
+  @override
+  State<_SekitarTab> createState() => _SekitarTabState();
+}
+
+class _SekitarTabState extends State<_SekitarTab> {
+  bool _isLoading = true;
+  String? _error;
+  List<dynamic> _recommendations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecommendations();
+  }
+
+  Future<void> _fetchRecommendations() async {
+    final aiService = context.read<AiService>();
+    try {
+      final res = await aiService.getRecommendations(placeName: widget.placeName, topN: 5);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _recommendations = res['recommendations'] ?? [];
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _openMaps(Map<String, dynamic> item) async {
+    final lat = item['lat'];
+    final lng = item['lng'];
+    final mapsUrl = item['maps_url'];
+    
+    if (mapsUrl != null && mapsUrl.toString().isNotEmpty) {
+      final uri = Uri.parse(mapsUrl.toString());
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    }
+    
+    if (lat != null && lng != null) {
+      final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&dir_action=navigate');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final nearbyList = nearby.isNotEmpty ? nearby : (dest?.nearby ?? []);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Destinasi Terdekat',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Destinasi Terdekat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+              if (_isLoading)
+                const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+            ],
+          ),
           const SizedBox(height: 14),
-          if (nearbyList.isEmpty)
-            Center(child: Text('Tidak ada destinasi terdekat', style: TextStyle(color: Colors.grey[500])))
+
+          if (_isLoading)
+            ...List.generate(3, (index) => _buildShimmerItem())
+          else if (_error != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
+              child: Text('Gagal memuat rekomendasi AI: $_error', style: const TextStyle(color: Colors.red, fontSize: 12)),
+            )
+          else if (_recommendations.isEmpty)
+            Center(child: Text('Tidak ada rekomendasi AI terdekat', style: TextStyle(color: Colors.grey[500])))
           else
-          ...nearbyList.map((item) => Container(
+            ..._recommendations.map((item) => GestureDetector(
+              onTap: () => _openMaps(item),
+              child: Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -606,35 +689,90 @@ class _SekitarTab extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(item.imagePath, width: 60, height: 60, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: AppColors.primaryBlue.withOpacity(0.1),
-                              child: const Icon(Icons.image_not_supported_rounded, color: AppColors.primaryBlue, size: 24))),
+                    Container(
+                      width: 60, height: 60,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBlue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.place, color: AppColors.primaryBlue),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark)),
+                          Text(item['recommended_place'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark)),
                           const SizedBox(height: 3),
                           Row(children: [
                             const Icon(Icons.star_rounded, color: Color(0xFFFFB300), size: 13),
                             const SizedBox(width: 3),
-                            Text(item.rating.toString(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+                            Text(item['weighted_rating']?.toString() ?? '4.0', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textDark)),
                             const SizedBox(width: 6),
-                            Text('• ${item.distance}', style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                            Text('• ${item['category'] ?? ''}', style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
                           ]),
                           const SizedBox(height: 3),
-                          Text(item.description, style: const TextStyle(fontSize: 11, color: AppColors.textGrey), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text('Skor Kecocokan: ${(item['final_score'] * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded, color: AppColors.grey),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBlue.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.directions, color: AppColors.primaryBlue, size: 20),
+                    ),
                   ],
                 ),
-              )),
+              ),
+            )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerItem() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(width: 60, height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10))),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(width: double.infinity, height: 14, color: Colors.white),
+                ),
+                const SizedBox(height: 6),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(width: 100, height: 12, color: Colors.white),
+                ),
+                const SizedBox(height: 6),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(width: 150, height: 12, color: Colors.white),
+                ),
+              ],
+            ),
+          )
         ],
       ),
     );
@@ -676,8 +814,8 @@ class _UlasanTabState extends State<_UlasanTab> {
     }
 
     setState(() => _submitting = true);
-    final ratingService = context.read<RatingService>();
-    final err = await ratingService.submitRating(
+    final reviewService = context.read<ReviewService>();
+    final err = await reviewService.submitReview(
       destinationId: widget.destinationId!,
       rating: _selectedRating,
       komentar: _commentCtrl.text.trim(),
@@ -701,10 +839,10 @@ class _UlasanTabState extends State<_UlasanTab> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
-    final ratingService = context.watch<RatingService>();
+    final reviewService = context.watch<ReviewService>();
     final ratings = widget.destinationId != null
-        ? ratingService.ratingsFor(widget.destinationId!)
-        : <RatingModel>[];
+        ? reviewService.reviewsFor(widget.destinationId!)
+        : <ReviewModel>[];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
@@ -852,14 +990,14 @@ class _UlasanTabState extends State<_UlasanTab> {
             children: [
               Text('Semua Ulasan (${ratings.length})',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-              if (ratingService.isLoading)
+              if (reviewService.isLoading)
                 const SizedBox(width: 16, height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlue)),
             ],
           ),
           const SizedBox(height: 12),
 
-          if (ratingService.isLoading && ratings.isEmpty)
+          if (reviewService.isLoading && ratings.isEmpty)
             const Center(child: Padding(
               padding: EdgeInsets.all(32),
               child: CircularProgressIndicator(color: AppColors.primaryBlue),
@@ -881,16 +1019,16 @@ class _UlasanTabState extends State<_UlasanTab> {
               ),
             )
           else
-            ...ratings.map((r) => _RatingCard(rating: r)),
+            ...ratings.map((r) => _ReviewCard(rating: r)),
         ],
       ),
     );
   }
 }
 
-class _RatingCard extends StatelessWidget {
-  final RatingModel rating;
-  const _RatingCard({required this.rating});
+class _ReviewCard extends StatelessWidget {
+  final ReviewModel rating;
+  const _ReviewCard({required this.rating});
 
   @override
   Widget build(BuildContext context) {
@@ -911,7 +1049,7 @@ class _RatingCard extends StatelessWidget {
                 radius: 18,
                 backgroundColor: AppColors.primaryBlue.withOpacity(0.12),
                 child: Text(
-                  rating.namaUser.isNotEmpty ? rating.namaUser[0].toUpperCase() : 'U',
+                  rating.userName.isNotEmpty ? rating.userName[0].toUpperCase() : 'U',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                 ),
               ),
@@ -920,7 +1058,7 @@ class _RatingCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(rating.namaUser,
+                    Text(rating.userName,
                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                     Row(
                       children: [
@@ -938,14 +1076,14 @@ class _RatingCard extends StatelessWidget {
                 ),
               ),
               Text(
-                _formatDate(rating.createdAt),
+                _formatDate(rating.createdAt ?? ''),
                 style: const TextStyle(fontSize: 11, color: AppColors.textGrey),
               ),
             ],
           ),
-          if (rating.komentar.isNotEmpty) ...[  
+          if (rating.comment.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Text(rating.komentar,
+            Text(rating.comment,
                 style: const TextStyle(fontSize: 13, color: AppColors.textGrey, height: 1.4)),
           ],
         ],
