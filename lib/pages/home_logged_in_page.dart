@@ -564,9 +564,7 @@ class _DestinationModelCard extends StatelessWidget {
                     const Icon(Icons.star_rounded, color: Color(0xFFFFB300), size: 14),
                     const SizedBox(width: 3),
                     Text(
-                        dest.rataRating != null
-                            ? dest.rataRating!.toStringAsFixed(1)
-                            : '4.8',
+                        dest.rataRating.toStringAsFixed(1),
                         style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

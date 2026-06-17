@@ -72,7 +72,7 @@ class _ExplorePageState extends State<ExplorePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: RefreshIndicator(
-        onRefresh: () => svc.fetchAll(),
+        onRefresh: () => svc.fetchAll(forceRefresh: true),
         color: AppColors.primaryBlue,
         child: Column(
         children: [
@@ -302,13 +302,13 @@ class _ExplorePageState extends State<ExplorePage> {
                               itemBuilder: (context, index) {
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 16),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Shimmer.fromColors(
-                                        baseColor: Colors.grey[300]!,
-                                        highlightColor: Colors.grey[100]!,
-                                        child: Container(
+                                  child: Shimmer.fromColors(
+                                    baseColor: Colors.grey[300]!,
+                                    highlightColor: Colors.grey[100]!,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
                                           width: 90,
                                           height: 90,
                                           decoration: BoxDecoration(
@@ -316,46 +316,34 @@ class _ExplorePageState extends State<ExplorePage> {
                                             borderRadius: BorderRadius.circular(12),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 8),
-                                            Shimmer.fromColors(
-                                              baseColor: Colors.grey[300]!,
-                                              highlightColor: Colors.grey[100]!,
-                                              child: Container(
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const SizedBox(height: 8),
+                                              Container(
                                                 width: double.infinity,
                                                 height: 16,
                                                 color: Colors.white,
                                               ),
-                                            ),
-                                            const SizedBox(height: 12),
-                                            Shimmer.fromColors(
-                                              baseColor: Colors.grey[300]!,
-                                              highlightColor: Colors.grey[100]!,
-                                              child: Container(
+                                              const SizedBox(height: 12),
+                                              Container(
                                                 width: 120,
                                                 height: 12,
                                                 color: Colors.white,
                                               ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Shimmer.fromColors(
-                                              baseColor: Colors.grey[300]!,
-                                              highlightColor: Colors.grey[100]!,
-                                              child: Container(
+                                              const SizedBox(height: 8),
+                                              Container(
                                                 width: 80,
                                                 height: 12,
                                                 color: Colors.white,
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
                                   ),
                                 );
                               },

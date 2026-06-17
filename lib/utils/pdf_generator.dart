@@ -47,7 +47,7 @@ class PdfGenerator {
       children: [
         pw.Text('Tanjungpinang Guide AI', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blue800)),
         pw.SizedBox(height: 8),
-        pw.Text(itinerary.title, style: pw.TextStyle(fontSize: 16)),
+        pw.Text(itinerary.title, style: const pw.TextStyle(fontSize: 16)),
         pw.Divider(color: PdfColors.grey400),
       ],
     );
@@ -56,9 +56,9 @@ class PdfGenerator {
   static pw.Widget _buildSummary(ItineraryModel itinerary) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
-      decoration: pw.BoxDecoration(
+      decoration: const pw.BoxDecoration(
         color: PdfColors.grey100,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+        borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,

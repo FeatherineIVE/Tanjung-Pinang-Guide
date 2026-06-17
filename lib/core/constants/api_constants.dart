@@ -3,6 +3,7 @@
 ///   - Android Emulator : http://10.0.2.2:3000
 ///   - HP Fisik (WiFi)  : http://<IP_LOKAL>:3000
 ///   - Web / Desktop    : http://localhost:3000
+library;
 
 class ApiConstants {
   // ── Base URL ─────────────────────────────────────────────────────────────

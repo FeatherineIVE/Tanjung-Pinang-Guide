@@ -49,7 +49,7 @@ class DestinationModel {
   factory DestinationModel.fromJson(Map<String, dynamic> json) {
     // Backend uses English field names
     final ticketPrice = json['ticketPrice'] ?? json['ticket_price'];
-    final String? hargaTiket = (ticketPrice != null && ticketPrice != 0)
+    final String hargaTiket = (ticketPrice != null && ticketPrice != 0)
         ? 'Rp ${ticketPrice.toString()}'
         : 'Gratis';
 

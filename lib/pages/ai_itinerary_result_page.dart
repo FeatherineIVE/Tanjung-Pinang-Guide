@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/itinerary_service.dart';
 import '../services/auth_service.dart';
 import '../models/itinerary_model.dart';
-import '../utils/app_colors.dart';
 import '../utils/pdf_generator.dart';
 import '../widgets/app_toast.dart';
 
@@ -264,11 +263,11 @@ class _AIItineraryResultPageState extends State<AIItineraryResultPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(Icons.near_me_outlined, color: Color(0xFF0284C7), size: 18),
-                          const SizedBox(width: 8),
-                          const Text(
+                          Icon(Icons.near_me_outlined, color: Color(0xFF0284C7), size: 18),
+                          SizedBox(width: 8),
+                          Text(
                             'Transportasi Rekomendasi',
                             style: TextStyle(color: Color(0xFF0284C7), fontWeight: FontWeight.bold, fontSize: 14),
                           ),
@@ -290,11 +289,9 @@ class _AIItineraryResultPageState extends State<AIItineraryResultPage> {
                   height: 50,
                   child: OutlinedButton.icon(
                     onPressed: () async {
-                      if (data != null) {
-                        AppToast.info(context, 'Menyiapkan dokumen PDF...');
-                        await PdfGenerator.generateAndPrintItinerary(data);
-                      }
-                    },
+                      AppToast.info(context, 'Menyiapkan dokumen PDF...');
+                      await PdfGenerator.generateAndPrintItinerary(data);
+                                        },
                     icon: const Icon(Icons.file_download_outlined, color: Color(0xFF0284C7)),
                     label: const Text(
                       'Download untuk Akses Offline',

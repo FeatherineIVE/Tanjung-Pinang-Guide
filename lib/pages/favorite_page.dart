@@ -302,12 +302,12 @@ class _FavoriteCard extends StatelessWidget {
                             builder: (_) => ExploreDetailPage(destinationModel: destination),
                           ),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF1A9BD7)),
-                            const SizedBox(width: 6),
-                            const Text('Lihat Detail',
+                            Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF1A9BD7)),
+                            SizedBox(width: 6),
+                            Text('Lihat Detail',
                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1A9BD7))),
                           ],
                         ),

@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class DestinationImage extends StatelessWidget {
+  static final Map<String, Uint8List> _base64Cache = {};
+
   final String imagePath;
   final double? width;
   final double? height;
@@ -20,19 +24,33 @@ class DestinationImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imagePath.startsWith('http')) {
-      return Image.network(
-        imagePath,
+      return CachedNetworkImage(
+        imageUrl: imagePath,
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: errorBuilder,
+        placeholder: (context, url) => Container(
+          width: width,
+          height: height,
+          color: Colors.grey[200],
+        ),
+        errorWidget: (context, url, error) => errorBuilder != null
+            ? errorBuilder!(context, error, null)
+            : Container(
+                width: width,
+                height: height,
+                color: Colors.grey[200],
+                child: const Icon(Icons.image_not_supported_rounded, color: Colors.grey),
+              ),
       );
     } else if (imagePath.startsWith('data:image')) {
       try {
         final base64String = imagePath.split(',').last;
-        final bytes = base64Decode(base64String);
+        if (!_base64Cache.containsKey(base64String)) {
+          _base64Cache[base64String] = base64Decode(base64String);
+        }
         return Image.memory(
-          bytes,
+          _base64Cache[base64String]!,
           width: width,
           height: height,
           fit: fit,
