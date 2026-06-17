@@ -151,18 +151,6 @@ class _AIItineraryResultPageState extends State<AIItineraryResultPage> {
                       ),
                     ],
                   ),
-                  if (!isGenerating)
-                    GestureDetector(
-                      onTap: _fetchItinerary,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
-                      ),
-                    ),
                 ],
               ),
               if (_itineraryData != null && !isGenerating) ...[
@@ -573,7 +561,7 @@ class _AIItineraryResultPageState extends State<AIItineraryResultPage> {
                               Icon(Icons.location_on_outlined, size: 16, color: Colors.cyan.shade700),
                               const SizedBox(width: 6),
                               Text(
-                                'Lihat Rute Lokasi di Google Maps',
+                                'Lihat Rute Lokasi',
                                 style: TextStyle(color: Colors.cyan.shade700, fontSize: 12, fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(width: 4),
@@ -675,18 +663,76 @@ class _AIItineraryResultPageState extends State<AIItineraryResultPage> {
 
   Widget _buildShimmerLoading() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 2,
+      padding: const EdgeInsets.only(top: 16, bottom: 40),
+      itemCount: 3,
       itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: Colors.grey.shade300,
-          highlightColor: Colors.grey.shade100,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey.shade200,
+            highlightColor: Colors.grey.shade50,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header (Day)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(width: 36, height: 36, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(width: 150, height: 16, color: Colors.white),
+                            const SizedBox(height: 6),
+                            Container(width: 80, height: 12, color: Colors.white),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Container(height: 1, color: Colors.white),
+                // Timeline Items
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: List.generate(3, (i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(width: 60, height: 14, color: Colors.white),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(width: double.infinity, height: 16, color: Colors.white),
+                                const SizedBox(height: 8),
+                                Container(width: 120, height: 12, color: Colors.white),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    )),
+                  ),
+                )
+              ],
             ),
           ),
         );

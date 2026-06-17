@@ -208,8 +208,18 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
         final userId = auth.currentUser!.id;
         if (isFav) {
           bm.removeFavorite(userId, activeModel.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Destinasi dihapus dari tersimpan')),
+          );
         } else {
           bm.addFavorite(userId, activeModel);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Destinasi berhasil tersimpan', style: TextStyle(color: Colors.white)),
+              backgroundColor: Color(0xFF66BB6A),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       } else {
         // Belum resolve ke backend (tidak ditemukan / offline)

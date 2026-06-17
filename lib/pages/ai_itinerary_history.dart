@@ -255,7 +255,26 @@ class _AIItineraryHistoryState extends State<AIItineraryHistory> {
                                 ),
                               ),
                               onPressed: () {
-                                itineraryService.deleteItinerary(history.id);
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Hapus Riwayat', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    content: const Text('Apakah Anda ingin menghapus riwayat ini?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(ctx);
+                                          itineraryService.deleteItinerary(history.id);
+                                        },
+                                        child: const Text('Hapus', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                );
                               },
                               icon: const Icon(Icons.delete_outline, size: 16),
                               label: const Text(
