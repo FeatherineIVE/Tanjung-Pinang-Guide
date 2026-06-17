@@ -13,10 +13,14 @@ import 'services/review_service.dart';
 import 'services/itinerary_service.dart';
 import 'services/ai_service.dart';
 
+import 'services/notification_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Inisialisasi Firebase (diperlukan oleh firebase_auth dan google_sign_in)
   await Firebase.initializeApp();
+  // Inisialisasi Notifikasi Lokal
+  await NotificationService().init();
   runApp(const MyApp());
 }
 

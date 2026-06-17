@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:tanjung_pinang_guide/core/constants/api_constants.dart';
 import 'package:tanjung_pinang_guide/core/network/api_client.dart';
 import 'package:tanjung_pinang_guide/models/itinerary_model.dart';
+import 'notification_service.dart';
 
 class ItineraryService extends ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -51,6 +52,16 @@ class ItineraryService extends ChangeNotifier {
         }
         _isGenerating = false;
         notifyListeners();
+        
+        // Munculkan notifikasi lokal
+        try {
+          await NotificationService().showNotification(
+            id: 1,
+            title: 'Itinerary Selesai Dibuat',
+            body: 'Itinerary ${itinerary.days} hari Anda telah berhasil di-generate oleh AI.',
+          );
+        } catch (_) {}
+        
         return itinerary;
       } else {
         _error = response['message'] ?? 'Gagal membuat itinerary';

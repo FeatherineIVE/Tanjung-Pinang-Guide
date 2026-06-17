@@ -5,25 +5,24 @@ class NotificationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dummy Data
     final notifications = [
       {
-        'title': 'Destinasi Baru!',
-        'message': 'Pantai Trikora 4 kini telah ditambahkan ke panduan kami. Cek sekarang!',
+        'title': 'Destinasi Baru Ditambahkan!',
+        'message': 'Kami telah menambahkan destinasi menarik baru ke dalam aplikasi. Segera cek dan masukkan ke rencana liburan Anda!',
         'time': 'Baru saja',
-        'icon': Icons.beach_access_rounded,
+        'icon': Icons.add_location_alt_rounded,
         'color': Colors.blue,
       },
       {
-        'title': 'Tips Liburan',
-        'message': 'Jangan lupa bawa payung, cuaca di Tanjung Pinang hari ini cukup terik.',
+        'title': 'Rekomendasi Untukmu',
+        'message': 'Berdasarkan destinasi yang sering Anda lihat, kami merekomendasikan "Pulau Penyengat" sebagai destinasi wisata budaya untuk Anda kunjungi.',
         'time': '2 jam yang lalu',
-        'icon': Icons.wb_sunny_rounded,
+        'icon': Icons.recommend_rounded,
         'color': Colors.orange,
       },
       {
-        'title': 'Itinerary Selesai',
-        'message': 'Itinerary 3 hari Anda telah berhasil di-generate oleh AI.',
+        'title': 'Itinerary Selesai Dibuat',
+        'message': 'Itinerary otomatis Anda telah berhasil di-generate oleh AI secara lengkap.',
         'time': '1 hari yang lalu',
         'icon': Icons.auto_awesome,
         'color': Colors.purple,
