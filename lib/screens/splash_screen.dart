@@ -24,13 +24,16 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initAndNavigate() async {
     final auth = context.read<AuthService>();
 
-    // Tunggu AuthService.init() selesai secepat mungkin
-    if (auth.isInitializing) {
-      await Future.doWhile(() async {
+    // Tunggu minimal 1.5 detik agar loading screen (logo + teks) sempat terbaca
+    // sekaligus menunggu AuthService selesai inisialisasi
+    await Future.wait([
+      Future.delayed(const Duration(milliseconds: 1500)),
+      Future.doWhile(() async {
+        if (!auth.isInitializing) return false;
         await Future.delayed(const Duration(milliseconds: 10));
-        return auth.isInitializing;
-      });
-    }
+        return true;
+      }),
+    ]);
 
     if (!mounted) return;
 
