@@ -34,6 +34,7 @@ dependencies:
   printing: ^5.14.3
   path_provider: ^2.1.6
   cached_network_image: ^3.4.1
+  flutter_local_notifications: ^22.0.1
 
 
 dev_dependencies:
@@ -41,11 +42,20 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.14.2
+  flutter_native_splash: ^2.4.0
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: "assets/images/transparent.png"
+  android_12:
+    image: "assets/images/transparent.png"
+    icon_background_color: "#ffffff"
+    color: "#ffffff"
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo_blue.png"
+  image_path: "assets/images/icon_aplication.png"
 
 flutter:
   uses-material-design: true
