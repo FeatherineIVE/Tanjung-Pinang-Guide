@@ -33,6 +33,8 @@ class ReviewService extends ChangeNotifier {
     required int destinationId,
     required double rating,
     required String komentar,
+    int? userId,
+    String? userName,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -40,7 +42,9 @@ class ReviewService extends ChangeNotifier {
         body: {
           'destinationId': destinationId,
           'rating': rating,
-          'comment': komentar, // pastikan key-nya 'comment' atau 'komentar' sesuai backend
+          'comment': komentar,
+          if (userId != null) 'userId': userId,
+          if (userName != null) 'userName': userName,
         },
         withAuth: true,
       );

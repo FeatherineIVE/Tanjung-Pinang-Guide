@@ -51,8 +51,14 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
         // Sudah ada model dari backend — gunakan langsung
         _resolvedModel = widget.destinationModel;
         debugPrint('[FAV-DEBUG] Langsung pakai destinationModel id=${widget.destinationModel!.id}');
-        // Fetch reviews
         context.read<ReviewService>().fetchReviews(widget.destinationModel!.id);
+        
+        final user = context.read<AuthService>().currentUser;
+        context.read<DestinationService>().incrementVisit(
+          widget.destinationModel!.id,
+          userId: user?.id,
+          userName: user?.nama,
+        );
       } else if (widget.destination != null) {
         // Data dari dummy lokal — resolve ke backend
         debugPrint('[FAV-DEBUG] Resolve dari dummy: title=${widget.destination!.title}');
@@ -98,6 +104,13 @@ class _ExploreDetailPageState extends State<ExploreDetailPage>
       debugPrint('[FAV-DEBUG] BERHASIL resolve: id=${found.id} nama=${found.nama}');
       setState(() => _resolvedModel = found);
       context.read<ReviewService>().fetchReviews(found.id);
+      
+      final user = context.read<AuthService>().currentUser;
+      context.read<DestinationService>().incrementVisit(
+        found.id,
+        userId: user?.id,
+        userName: user?.nama,
+      );
     } else {
       debugPrint('[FAV-DEBUG] GAGAL resolve semua strategi untuk title="$title"');
     }
@@ -472,6 +485,7 @@ class _InfoTab extends StatelessWidget {
   final List<String> tags;
 
   const _InfoTab({
+    super.key,
     this.dest,
     this.deskripsi = '',
     this.lokasi = '',
@@ -534,7 +548,7 @@ class _InfoTab extends StatelessWidget {
 class _TipsTab extends StatelessWidget {
   final DestinationData? dest;
   final List<String> tips;
-  const _TipsTab({this.dest, this.tips = const []});
+  const _TipsTab({super.key, this.dest, this.tips = const []});
 
   @override
   Widget build(BuildContext context) {
@@ -815,10 +829,15 @@ class _UlasanTabState extends State<_UlasanTab> {
 
     setState(() => _submitting = true);
     final reviewService = context.read<ReviewService>();
+    final authService = context.read<AuthService>();
+    final user = authService.currentUser;
+    
     final err = await reviewService.submitReview(
       destinationId: widget.destinationId!,
       rating: _selectedRating,
       komentar: _commentCtrl.text.trim(),
+      userId: user?.id,
+      userName: user?.nama,
     );
     setState(() => _submitting = false);
 
@@ -827,7 +846,7 @@ class _UlasanTabState extends State<_UlasanTab> {
       _commentCtrl.clear();
       setState(() => _selectedRating = 5);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ulasan berhasil dikirim ✨'), backgroundColor: Color(0xFF66BB6A)),
+        const SnackBar(content: Text('Ulasan berhasil dikirim'), backgroundColor: Color(0xFF66BB6A)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -936,11 +955,11 @@ class _UlasanTabState extends State<_UlasanTab> {
                         fillColor: AppColors.background,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.greyBorder),
+                          borderSide: const BorderSide(color: AppColors.greyBorder),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.greyBorder),
+                          borderSide: const BorderSide(color: AppColors.greyBorder),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),

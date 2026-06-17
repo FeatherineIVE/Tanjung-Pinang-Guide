@@ -10,6 +10,8 @@ class DestinationService extends ChangeNotifier {
   List<DestinationModel> _destinations = [];
   bool _isLoading = false;
   String? _error;
+  DateTime? _lastFetchTime;
+  static const _cacheValidDuration = Duration(minutes: 5);
 
   DestinationService({ApiClient? api}) : _api = api ?? ApiClient();
 
@@ -21,18 +23,26 @@ class DestinationService extends ChangeNotifier {
   // ── Get All ───────────────────────────────────────────────────────────────
   /// Ambil semua destinasi, opsional filter berdasarkan kategori.
   /// kategori: 'pantai' | 'sejarah' | 'alam' | 'kuliner' | null (semua)
-  Future<void> fetchAll({String? kategori}) async {
+  Future<void> fetchAll({String? kategori, bool forceRefresh = false}) async {
+    if (!forceRefresh && _destinations.isNotEmpty && _lastFetchTime != null) {
+      if (DateTime.now().difference(_lastFetchTime!) < _cacheValidDuration) {
+        // Data masih valid dalam cache
+        return;
+      }
+    }
+
     _setLoading(true);
     _error = null;
     try {
       final res = await _api.get(
         ApiConstants.destinations,
-        queryParams: kategori != null ? {'kategori': kategori} : null,
+        queryParams: kategori != null && kategori != 'semua' ? {'kategori': kategori} : null,
       );
       final List<dynamic> list = res['data'] as List<dynamic>? ?? [];
       _destinations = list
           .map((e) => DestinationModel.fromJson(e as Map<String, dynamic>))
           .toList();
+      _lastFetchTime = DateTime.now();
     } on ApiException catch (e) {
       _error = e.message;
     } catch (e) {
@@ -58,9 +68,15 @@ class DestinationService extends ChangeNotifier {
   }
 
   // ── Increment Visit ───────────────────────────────────────────────────────
-  Future<void> incrementVisit(int id) async {
+  Future<void> incrementVisit(int id, {int? userId, String? userName}) async {
     try {
-      await _api.patch(ApiConstants.destinationVisit(id));
+      await _api.patch(
+        ApiConstants.destinationVisit(id),
+        body: {
+          if (userId != null) 'userId': userId,
+          if (userName != null) 'userName': userName,
+        },
+      );
     } catch (_) {
       // Abaikan jika gagal increment
     }
