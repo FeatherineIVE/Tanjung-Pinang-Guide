@@ -232,7 +232,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Itinerary Siap! ✨',
+                            'Itinerary Siap!',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 22,
@@ -376,11 +376,11 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
                             Navigator.pop(context);
                           },
                           borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
+                              children: [
                                 Icon(
                                   Icons.bookmark_rounded,
                                   color: Colors.white,
@@ -641,14 +641,13 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
           ],
 
           // Divider
-          if (activity != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Container(
-                height: 1,
-                color: Colors.grey[200],
-              ),
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              height: 1,
+              color: Colors.grey[200],
             ),
+          ),
         ],
       ),
     );

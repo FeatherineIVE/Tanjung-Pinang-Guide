@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import 'ai_itinerary_history.dart';
 import 'ai_itinerary_result_page.dart';
 
 class AIItineraryFormPage extends StatefulWidget {
@@ -73,11 +71,11 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
                   // Days Section
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.calendar_today, color: Color(0xFF1A9BD7), size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
+                      Icon(Icons.calendar_today, color: Color(0xFF1A9BD7), size: 20),
+                      SizedBox(width: 8),
+                      Text(
                         'Berapa Hari?',
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
@@ -119,11 +117,11 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
                   const SizedBox(height: 24),
 
                   // People Section
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.people, color: Color(0xFF1A9BD7), size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
+                      Icon(Icons.people, color: Color(0xFF1A9BD7), size: 20),
+                      SizedBox(width: 8),
+                      Text(
                         'Berapa Orang?',
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
@@ -169,11 +167,11 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
                   const SizedBox(height: 24),
 
                   // Budget Section
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.wallet, color: Color(0xFF1A9BD7), size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
+                      Icon(Icons.wallet, color: Color(0xFF1A9BD7), size: 20),
+                      SizedBox(width: 8),
+                      Text(
                         'Budget Perjalanan',
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
@@ -235,11 +233,11 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
                   const SizedBox(height: 24),
 
                   // Interests Section
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.favorite, color: Color(0xFF1A9BD7), size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
+                      Icon(Icons.favorite, color: Color(0xFF1A9BD7), size: 20),
+                      SizedBox(width: 8),
+                      Text(
                         'Minat Wisata (Pilih bebas)',
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
@@ -247,7 +245,7 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Jika kosong, itinerary akan mencakup semua jenis wisata ✨',
+                    'Jika kosong, itinerary akan mencakup semua jenis wisata',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 12),
@@ -299,11 +297,11 @@ class _AIItineraryFormPageState extends State<AIItineraryFormPage> {
                   const SizedBox(height: 24),
 
                   // Notes Section
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.notes, color: Color(0xFF1A9BD7), size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
+                      Icon(Icons.notes, color: Color(0xFF1A9BD7), size: 20),
+                      SizedBox(width: 8),
+                      Text(
                         'Catatan Tambahan (opsional)',
                         style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
